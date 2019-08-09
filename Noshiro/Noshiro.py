@@ -6,6 +6,7 @@ sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/Calibration')
 sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/Goal')
 sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/ParaAvoidance')
 sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/Running')
+sys.path.append('/home/pi/git/kimuralab/Mission')
 sys.path.append('/home/pi/git/kimuralab/SensorModuleTest/BME280')
 sys.path.append('/home/pi/git/kimuralab/SensorModuleTest/BMX055')
 sys.path.append('/home/pi/git/kimuralab/SensorModuleTest/Camera')
@@ -110,6 +111,7 @@ paraAvoidanceLog = 	"/home/pi/log/paraAvoidanceLog.txt"
 runningLog = 		"/home/pi/log/runningLog.txt"
 goalDetectionLog =	"/home/pi/log/goalDetectionLog.txt"
 captureLog = 		"/home/pi/log/captureLog.txt"
+missionLog = 		"/home/pi/log/missionLog.txt"
 calibrationLog = 	"/home/pi/log/calibrationLog"
 errorLog = 			"/home/pi/log/erroLog.txt"
 
@@ -168,7 +170,7 @@ if __name__ == "__main__":
 			Other.saveLog(phaseLog, "2", "Sleep Phase Started", time.time() - t_start)
 			print("Sleep Phase Started  {0}".format(time.time() - t_start))
 			IM920.Send("P2S")
-			pi.write(22, 1)			#IM920 Turn Off
+			#pi.write(22, 0)			#IM920 Turn Off
 			t_sleep_start = time.time()
 
 			# --- Sleep --- #
@@ -177,22 +179,19 @@ if __name__ == "__main__":
 				Other.saveLog(captureLog, time.time() - t_start, photoName)
 				Other.saveLog(sleepLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), TSL2561.readLux(), BMX055.bmx055_read())
 				time.sleep(1)
-				IM920.Send("SLEEP")
+				IM920.Send("P2D")
+			IM920.Send("P2F")
 
 		# ------------------- Release Phase ------------------- #
 		if(phaseChk <= 3):
 			Other.saveLog(phaseLog, "3", "Release Phase Started", time.time() - t_start)
 			t_release_start = time.time()
 			print("Releasing Phase Started  {0}".format(time.time() - t_start))
-			pi.write(22, 1)
-			#time.sleep(2)
-			#IM920.Send("RELEASEJ")
+			#IM920.Send("P3S")
 
 			# --- Release Judgement, "while" is for timeout --- #
 			while (time.time() - t_release_start <= t_release):
-				#luxjudge,lcount = Release.luxjudge(
-				
-				#IM920.Send("RELEASE J")
+				#luxjudge,lcount = Release.luxjudge()
 				pressjudge,acount = Release.pressjudge()
 
 				if luxjudge == 1 or pressjudge == 1:
@@ -212,6 +211,8 @@ if __name__ == "__main__":
 				# --- Take Photo --- #
 				photoName = Capture.Capture(photopath)
 				Other.saveLog(captureLog, time.time() - t_start, photoName)
+				
+				#IM920.Send("P3D")
 			else:
 				Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Timeout")
 				print("Release Timeout")
@@ -238,16 +239,16 @@ if __name__ == "__main__":
 				elif pressjudge == 0: #and gpsjudge == 0:
 				    print("Descend now taking photo")
 				#elif pressjudge == 1 : #or gpsjudge == 1:
-				#print("Landing JudgemenNow")
+				#print("Landing JudgementNow")
 				
-				# --- Save Log --- #
+				# --- Save Log and Take Photo--- #
 				for i in range(3):
 					photoName = Capture.Capture(photopath)
 					Other.saveLog(captureLog, time.time() - t_start, photoName)
 					Other.saveLog(landingLog ,time.time() - t_start, Pcount, gacount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
 					time.sleep(1)
 
-				# --- Take Photo --- #
+				IM920.Send("P4D")
 			else:
 				Other.saveLog(landingLog, time.time() - t_start, "Landing Judged by Timeout")
 				print("Landing Timeout")
@@ -314,6 +315,7 @@ if __name__ == "__main__":
 			ellipseScale = Calibration.Calibration(fileCal)
 			Other.saveLog(fileCal, ellipseScale)
 
+			# --- Read GPS Data --- #
 			while(not RunningGPS.checkGPSstatus(gpsData)):
 				gpsData = GPS.readGPS()
 				time.sleep(1)
@@ -325,10 +327,11 @@ if __name__ == "__main__":
 				if(RunningGPS.checkGPSstatus(gpsData)):
 					nLat = gpsData[1]
 					nLon = gpsData[2]
+					IM920.Send("G" + str(nLat) + ":" + str(nLon))
 
 				# --- Calibration --- #
-				#Every [timeout_calibratoin] second,  Calibrate
 				if(time.time() - t_calib_origin > timeout_calibration):
+					#Every [timeout_calibratoin] second,  Calibrate
 					Motor.motor(0, 0, 2)
 					print("Calibration")
 					fileCal = Other.fileName(calibrationLog, "txt")
@@ -347,18 +350,14 @@ if __name__ == "__main__":
 					photoName = Capture.Capture(photopath)
 					Other.saveLog(captureLog, time.time() - t_start, photoName)
 					t_takePhoto_start = time.time()
-
-				#Calculate angle
-				nAng = RunningGPS.calNAng(ellipseScale, angOffset)
-
-				#Calculate disGoal and relAng
+					
+				# --- Calculate disGoal and relAng and Motor Power --- #
+				nAng = RunningGPS.calNAng(ellipseScale, angOffset)			#Calculate Rover Angle
 				relAng[2] = relAng[1]
 				relAng[1] = relAng[0]
 				disGoal, angGoal, relAng[0] = RunningGPS.calGoal(nLat, nLon, gLat, gLon, nAng)
-				rAng = np.median(relAng)
-
-				#Calculate Motor Power
-				mPL, mPR, mPS = RunningGPS.runMotorSpeed(rAng, kp, maxMP)
+				rAng = np.median(relAng)									#Calculate angle between Rover and Goal
+				mPL, mPR, mPS = RunningGPS.runMotorSpeed(rAng, kp, maxMP)	#Calculate Motor Power
 
 				# --- Save Log --- #
 				print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
@@ -381,9 +380,11 @@ if __name__ == "__main__":
 				print("goal is",goalFlug)
 				Other.saveLog(goalDetectionLog, time.time() - t_start, gpsData, goalFlug, goalArea, goalGAP, photoName)
 				Other.saveLog(captureLog, time.time() - t_start, photoName)
+				IM920.Send("P8D")
 			print("Goal Detection Phase Finished")
 			IM920.Send("P8F")
 
+		# ------------------- Program Finish ------------------- #
 		print("Program Finished")
 		IM920.Send("P10")
 		Other.saveLog(phaseLog, "10", "Program Finished", time.time() - t_start)
