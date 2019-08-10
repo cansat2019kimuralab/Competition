@@ -142,7 +142,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 8
+	phaseChk = 3
 
 def close():
 	GPS.closeGPS()
@@ -193,7 +193,7 @@ if __name__ == "__main__":
 			while (time.time() - t_release_start <= t_release):
 				#luxjudge,lcount = Release.luxjudge()
 				pressjudge,acount = Release.pressjudge()
-
+				t1 = time.time()
 				if luxjudge == 1 or pressjudge == 1:
 					Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Sensor", luxjudge, pressjudge)
 					print("Rover has released")
@@ -201,18 +201,15 @@ if __name__ == "__main__":
 				else:
 					print("Rover is in rocket")
 					IM920.Send("P3D")
-
+				print(time.time() - t1)
 				# --- Save Log --- #
-				for i in range(2):
-					Other.saveLog(releaseLog, time.time() - t_start, acount, GPS.readGPS(), TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
-					#Other.saveLog(releaseLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
-					time.sleep(0.5)
-				
-				# --- Take Photo --- #
+				Other.saveLog(releaseLog, time.time() - t_start, acount, GPS.readGPS(), TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
+				#Other.saveLog(releaseLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
 				photoName = Capture.Capture(photopath)
 				Other.saveLog(captureLog, time.time() - t_start, photoName)
-				
-				#IM920.Send("P3D")
+				Other.saveLog(releaseLog, time.time() - t_start, acount, GPS.readGPS(), TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
+
+				IM920.Send("P3D")
 			else:
 				Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Timeout")
 				print("Release Timeout")
