@@ -175,9 +175,9 @@ if __name__ == "__main__":
 
 			# --- Sleep --- #
 			while(time.time() - t_sleep_start <= t_sleep):
-				photoName = Capture.Capture(photopath)
-				Other.saveLog(captureLog, time.time() - t_start, photoName)
 				Other.saveLog(sleepLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), TSL2561.readLux(), BMX055.bmx055_read())
+				photoName = Capture.Capture(photopath)
+				Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 				time.sleep(1)
 				IM920.Send("P2D")
 			IM920.Send("P2F")
@@ -201,13 +201,11 @@ if __name__ == "__main__":
 				else:
 					print("Rover is in rocket")
 					IM920.Send("P3D")
-				print(time.time() - t1)
-				# --- Save Log --- #
-				Other.saveLog(releaseLog, time.time() - t_start, acount, GPS.readGPS(), TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
-				#Other.saveLog(releaseLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
+				# --- Save Log and Take Photo --- #
+				gpsData = GPS.readGPS()
+				Other.saveLog(releaseLog, time.time() - t_start, acount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
 				photoName = Capture.Capture(photopath)
-				Other.saveLog(captureLog, time.time() - t_start, photoName)
-				Other.saveLog(releaseLog, time.time() - t_start, acount, GPS.readGPS(), TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
+				Other.saveLog(captureLog, time.time() - t_start, gpsData, BME280.bme280_read(), photoName)
 
 				IM920.Send("P3D")
 			else:
@@ -240,10 +238,9 @@ if __name__ == "__main__":
 				
 				# --- Save Log and Take Photo--- #
 				for i in range(3):
-					photoName = Capture.Capture(photopath)
-					Other.saveLog(captureLog, time.time() - t_start, photoName)
 					Other.saveLog(landingLog ,time.time() - t_start, Pcount, gacount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
-					time.sleep(1)
+					photoName = Capture.Capture(photopath)
+					Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 
 				IM920.Send("P4D")
 			else:
@@ -293,7 +290,7 @@ if __name__ == "__main__":
 					Motor.motor(60, 60, 5)
 					Motor.motor(0 ,0, 2)
 
-				Other.saveLog(captureLog, time.time() - t_start, photoName)
+				Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), photoName, paraExsist, paraArea)
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Finished")
 			IM920.Send("P6F")
@@ -304,20 +301,12 @@ if __name__ == "__main__":
 			print("Running Phase Started")
 			IM920.Send("P7S")
 
-			# --- Calibration --- #
-			fileCal = Other.fileName(calibrationLog, "txt")
-			Motor.motor(60, 0, 2)
-			Calibration.readCalData(fileCal)
-			Motor.motor(0, 0, 1)
-			ellipseScale = Calibration.Calibration(fileCal)
-			Other.saveLog(fileCal, ellipseScale)
-
 			# --- Read GPS Data --- #
 			while(not RunningGPS.checkGPSstatus(gpsData)):
 				gpsData = GPS.readGPS()
 				time.sleep(1)
 
-			t_calib_origin = time.time()
+			t_calib_origin = time.time() - timeout_calibration - 20
 			t_takePhoto_start = time.time()
 			while(disGoal >= 5):
 				# --- Get GPS Data --- #
@@ -337,6 +326,7 @@ if __name__ == "__main__":
 					Motor.motor(0, 0, 1)
 					ellipseScale = Calibration.Calibration(fileCal)
 					Other.saveLog(fileCal, ellipseScale)
+					Other.saveLog(fileCal, time.time() - t_start)
 					t_calib_origin = time.time()
 
 				# --- Taking Photo --- #
@@ -345,9 +335,9 @@ if __name__ == "__main__":
 					Motor.motor(30, 30, 0.5)
 					Motor.motor(0, 0, 0.5)
 					photoName = Capture.Capture(photopath)
-					Other.saveLog(captureLog, time.time() - t_start, photoName)
+					Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 					t_takePhoto_start = time.time()
-					
+				 	
 				# --- Calculate disGoal and relAng and Motor Power --- #
 				nAng = RunningGPS.calNAng(ellipseScale, angOffset)			#Calculate Rover Angle
 				relAng[2] = relAng[1]
@@ -376,7 +366,7 @@ if __name__ == "__main__":
 				goalBuf = goalFlug
 				print("goal is",goalFlug)
 				Other.saveLog(goalDetectionLog, time.time() - t_start, gpsData, goalFlug, goalArea, goalGAP, photoName)
-				Other.saveLog(captureLog, time.time() - t_start, photoName)
+				Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 				IM920.Send("P8D")
 			print("Goal Detection Phase Finished")
 			IM920.Send("P8F")
