@@ -55,9 +55,11 @@ t_sleep = 10				#time for sleep phase
 t_release = 30				#time for release(loopx)
 t_land = 300				#time for land(loopy)
 t_melt = 5					#time for melting
+t_transmit = 600			#time for transmit limit
 t_sleep_start = 0			#time for sleep origin
 t_release_start = 0			#time for release origin
 t_land_start = 0			#time for land origin
+t_transmit_start = 0
 t_calib_origin = 0			#time for calibration origin
 t_paraDete_start = 0
 t_takePhoto_start = 0		#time for taking photo
@@ -99,9 +101,9 @@ xSamp = 0.4			#sample for goal
 bomb = 0			#use for goalDete flug
 
 # --- variable for Transmit --- #
-mode=1
-readmode=0
-count=0
+mode=1				#valiable for transmit mode 
+readmode=0			#valiable for image read mode
+count=0				#valiable for transmit count
 amari=0
 
 # --- variable for Running --- #
@@ -322,17 +324,18 @@ if __name__ == "__main__":
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Finished")
 			IM920.Send("P6F")
 		# --------------------Transmit Image Phase-------------------#
-		
-		wireless_transmitter.changesize(photoName)
-		byte,mode=wireless_transmitter.selectphoto('/home/pi/git/kimuralab/Mission/sendPhoto.jpg',readmode)
-		print("image ready")
+		t_transmit_start=time.time()
+		while(time.time()-t_transmit_start<=t_transmit):
+			wireless_transmitter.changesize(photoName)
+			byte,mode=wireless_transmitter.selectphoto('/home/pi/git/kimuralab/Mission/sendPhoto.jpg',readmode)
+			print("image ready")
 
-		while mode:
-			mode=wireless_transmitter.transmitdata()
-		print("transmit start")
-		t_start=time.time()
-		wireless_transmitter.sendphoto(byte)
-		print(time.time()-t_start)
+			while mode:
+				mode=wireless_transmitter.transmitdata()
+			print("transmit start")
+			t_start=time.time()
+			wireless_transmitter.sendphoto(byte)
+			print(time.time()-t_start)
 	
 		# ------------------- Running Phase ------------------- #
 		if(phaseChk <= 7):
