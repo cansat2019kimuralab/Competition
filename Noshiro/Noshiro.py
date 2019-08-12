@@ -17,7 +17,7 @@ sys.path.append('/home/pi/git/kimuralab/SensorModuleTest/Melting')
 sys.path.append('/home/pi/git/kimuralab/SensorModuleTest/Motor')
 sys.path.append('/home/pi/git/kimuralab/SensorModuleTest/TSL2561')
 sys.path.append('/home/pi/git/kimuralab/Other')
-
+sys.path.append('/home/pi/git/kimuralab/Mission')
 import binascii
 import difflib
 import numpy as np
@@ -44,7 +44,7 @@ import Release
 import RunningGPS
 import Stuck
 import TSL2561
-
+import wireless_transmitter
 phaseChk = 0	#variable for phase Check
 
 # --- variable of time setting --- #
@@ -95,7 +95,11 @@ LSamp = 1.0			#sample for goal
 GAPSamp = 140		#sample for goal
 xSamp = 0.4			#sample for goal
 bomb = 0			#use for goalDete flug
-
+# --- variable for Transmit --- #
+mode=1
+readmode=0
+count=0
+amari=0
 # --- variable for Running --- #
 ellipseScale = [0.0, 0.0, 0.0, 0.0] #Convert coefficient Ellipse to Circle
 disGoal = 100.0						#Distance from Goal [m]
@@ -313,6 +317,17 @@ if __name__ == "__main__":
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), photoName, paraExsist, paraArea)
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Finished")
 			IM920.Send("P6F")
+		# --------------------Transmit Image Phase-------------------#
+		wireless_transmitter.changesize(photoname,readmode)
+		byte,mode=wireless_transmitter.selectphoto('/home/pi/git/kimuralab/Mission/sendPhoto.jpg',readmode)
+		print("image ready")
+
+		while mode:
+			mode=wireless_transmitter.transmitdata()
+		print("transmit start")
+		t_start=time.time()
+		wireless_transmitter.sendphoto(byte)
+		print(time.time()-t_start)
 
 		# ------------------- Running Phase ------------------- #
 		if(phaseChk <= 7):
