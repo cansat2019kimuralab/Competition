@@ -6,6 +6,7 @@ sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/Calibration')
 sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/Goal')
 sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/ParaAvoidance')
 sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/Running')
+sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/Stuck')
 sys.path.append('/home/pi/git/kimuralab/Mission')
 sys.path.append('/home/pi/git/kimuralab/SensorModuleTest/BME280')
 sys.path.append('/home/pi/git/kimuralab/SensorModuleTest/BMX055')
@@ -134,6 +135,9 @@ errorLog = 			"/home/pi/log/erroLog.txt"
 
 photopath = 		"/home/pi/photo/photo"
 photoName =			""
+
+fileCal = 			""	#File Path for Calibration Log
+fileStuck = 		""	#File Path for Stuck Log
 
 pi = pigpio.pi()	#object to set pigpio
 
