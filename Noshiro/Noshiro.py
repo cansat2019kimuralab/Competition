@@ -97,7 +97,6 @@ xSamp = 0.4			#sample for goal
 bomb = 0			#use for goalDete flug
 
 # --- variable for Running --- #
-fileCal = "" 						#file path for Calibration
 ellipseScale = [0.0, 0.0, 0.0, 0.0] #Convert coefficient Ellipse to Circle
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
@@ -130,14 +129,13 @@ goalDetectionLog =	"/home/pi/log/goalDetectionLog.txt"
 captureLog = 		"/home/pi/log/captureLog.txt"
 missionLog = 		"/home/pi/log/missionLog.txt"
 calibrationLog = 	"/home/pi/log/calibrationLog"
-stuckLog = 			"/home/pi/log/stuckLog"
+stuckLog = 			"/home/pi/log/stuckLog.txt"
 errorLog = 			"/home/pi/log/erroLog.txt"
 
 photopath = 		"/home/pi/photo/photo"
 photoName =			""
 
 fileCal = 			""	#File Path for Calibration Log
-fileStuck = 		""	#File Path for Stuck Log
 
 pi = pigpio.pi()	#object to set pigpio
 
@@ -364,7 +362,6 @@ if __name__ == "__main__":
 						time.sleep(1)
 					stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
 					if(stuckMode[0] == 1)
-						fileStuck = Other.fileName(stuckLog, "txt")
 						Other.saveLog(fileStuck, time.time() - t_start, gpsData, stuckMode)
 						if(stuckMode[1] >= 2)
 							Motor.motor(60, 60, 5)
