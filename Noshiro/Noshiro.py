@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 sys.path.append('/home/pi/git/kimuralab/Detection/ParachuteDetection')
+sys.path.append('/home/pi/git/kimuralab/Detection/GoalDetection')
 sys.path.append('/home/pi/git/kimuralab/Detection/ReleaseAndLandingDetection')
 sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/Calibration')
 sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/Goal')
@@ -31,7 +32,7 @@ import BMX055
 import BME280
 import Capture
 import Calibration
-import Goal
+import goal_detection
 import GPS
 import IM920
 import Land
@@ -45,12 +46,13 @@ import RunningGPS
 import Stuck
 import TSL2561
 import wireless_transmitter
+
 phaseChk = 0	#variable for phase Check
 
 # --- variable of time setting --- #
 t_start  = 0.0				#time when program started
-t_sleep = 60				#time for sleep phase
-t_release = 120				#time for release(loopx)
+t_sleep = 10				#time for sleep phase
+t_release = 30				#time for release(loopx)
 t_land = 300				#time for land(loopy)
 t_melt = 5					#time for melting
 t_sleep_start = 0			#time for sleep origin
@@ -95,17 +97,19 @@ LSamp = 1.0			#sample for goal
 GAPSamp = 140		#sample for goal
 xSamp = 0.4			#sample for goal
 bomb = 0			#use for goalDete flug
+
 # --- variable for Transmit --- #
 mode=1
 readmode=0
 count=0
 amari=0
+
 # --- variable for Running --- #
 ellipseScale = [0.0, 0.0, 0.0, 0.0] #Convert coefficient Ellipse to Circle
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon = 35.742532, 140.011542	#Coordinates of That time
+gLat, gLon = 35.918383, 139.9079	#Coordinates of That time
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
@@ -165,7 +169,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 3
+	phaseChk = 6
 
 def close():
 	GPS.closeGPS()
@@ -318,7 +322,8 @@ if __name__ == "__main__":
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Finished")
 			IM920.Send("P6F")
 		# --------------------Transmit Image Phase-------------------#
-		wireless_transmitter.changesize(photoname,readmode)
+		
+		wireless_transmitter.changesize(photoName)
 		byte,mode=wireless_transmitter.selectphoto('/home/pi/git/kimuralab/Mission/sendPhoto.jpg',readmode)
 		print("image ready")
 
@@ -328,7 +333,7 @@ if __name__ == "__main__":
 		t_start=time.time()
 		wireless_transmitter.sendphoto(byte)
 		print(time.time()-t_start)
-
+	
 		# ------------------- Running Phase ------------------- #
 		if(phaseChk <= 7):
 			Other.saveLog(phaseLog, "7", "Running Phase Started", time.time() - t_start)
@@ -339,7 +344,7 @@ if __name__ == "__main__":
 			while(not RunningGPS.checkGPSstatus(gpsData)):
 				gpsData = GPS.readGPS()
 				time.sleep(1)
-			stuckMode = Runnning.RunningGPS(gpsData[1], gpsData[2])
+			stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
 
 			t_calib_origin = time.time() - timeout_calibration - 20
 			t_takePhoto_start = time.time()
@@ -356,7 +361,7 @@ if __name__ == "__main__":
 					Motor.motor(0, 0, 2)
 					print("Calibration")
 					fileCal = Other.fileName(calibrationLog, "txt")
-					Motor.motor(50, 0, 2)
+					Motor.motor(50, 10, 2)
 					Calibration.readCalData(fileCal)
 					Motor.motor(0, 0, 1)
 					ellipseScale = Calibration.Calibration(fileCal)
@@ -376,9 +381,10 @@ if __name__ == "__main__":
 						gpsData = GPS.readGPS()
 						time.sleep(1)
 					stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
-					if(stuckMode[0] == 1)
-						Other.saveLog(fileStuck, time.time() - t_start, gpsData, stuckMode)
-						if(stuckMode[1] >= 2)
+					if(stuckMode[0] == 1):
+						Other.saveLog(stuckLog, time.time() - t_start, gpsData, stuckMode)
+						if(stuckMode[1] >= 2):
+							print("Stuck" + str(stuckMode))
 							Motor.motor(60, 60, 5)
 					t_takePhoto_start = time.time()
 
@@ -441,7 +447,7 @@ if __name__ == "__main__":
 				else:
 					#-----------------target left------------------#
 					if goalArea < 10000 and goalArea > 0 and goalGAP < 0:
-						LR2G, angR2G = goal_detection.goal_detection.calR2G(goalArea, goalGAP, areaSamp, LSamp, xSamp, GAPSamp)
+						LR2G, angR2G = goal_detection.calR2G(goalArea, goalGAP, areaSamp, LSamp, xSamp, GAPSamp)
 						goalBufAng = RunningGPS.calNAng(ellipseScale, angOffset)
 						tbomb = time.time()
 						while time.time() - tbomb < 4:
