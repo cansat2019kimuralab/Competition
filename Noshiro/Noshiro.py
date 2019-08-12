@@ -106,7 +106,7 @@ relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time 
 rAng = 0.0							#Median of relAng [deg]
 mP, mPL, mPR, mPS = 0, 0, 0, 0		#Motor Power
 kp = 0.8							#Proportional Gain
-Gkp = 0.2							#Proportional Gain for Goal
+Gkp = 0.7							#Proportional Gain for Goal
 maxMP = 60							#Maximum Motor Power
 mp_min = 20							#motor power for Low level
 mp_max = 50							#motor power fot High level
@@ -294,7 +294,7 @@ if __name__ == "__main__":
 				if paraExsist == 1:
 					Motor.motor(-60, -60, 5)
 					Motor.motor(0, 0, 2)
-					Motor.motor(40, 10, 0.5)
+					Motor.motor(50, 10, 1.0)
 					Motor.motor(0, 0, 2)
 
 				if paraExsist == 0:
@@ -389,10 +389,8 @@ if __name__ == "__main__":
 				Motor.motor(0,0,0.3)
 				#-----------------get information-----------------#
 				goalFlug, goalArea, goalGAP, photoName = goal_detection.GoalDetection(photopath, H_min, H_max, S_thd, goalthd)
-				print("GAP",goalGAP)
-				#print("bomb",bomb)
-				print("area",goalArea)
-				print("flug",goalFlug)	
+				print("flug", goalFlug, "area", goalArea, "GAP", goalGAP)
+				#print("bomb",bomb)	
 				goalnowAng = RunningGPS.calNAng(ellipseScale, angOffset)
 				#--------------------goal---------------------#
 				if goalFlug == 0:
