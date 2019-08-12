@@ -20,6 +20,7 @@ sys.path.append('/home/pi/git/kimuralab/Other')
 import binascii
 import difflib
 import numpy as np
+import os
 import pigpio
 import serial
 import time
@@ -472,3 +473,4 @@ if __name__ == "__main__":
 		Other.saveLog(errorLog, traceback.format_exc())
 		Other.saveLog(errorLog, "\n")
 		IM920.Send("EO")
+		#os.system('sudo reboot')
