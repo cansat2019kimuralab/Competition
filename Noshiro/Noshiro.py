@@ -41,6 +41,7 @@ import ParaDetection
 import ParaAvoidance
 import Release
 import RunningGPS
+import Stuck
 import TSL2561
 
 phaseChk = 0	#variable for phase Check
@@ -107,6 +108,9 @@ relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time 
 rAng = 0.0							#Median of relAng [deg]
 mP, mPL, mPR, mPS = 0, 0, 0, 0		#Motor Power
 kp = 0.8							#Proportional Gain
+stuckMode = [0, 0]					#Variable for Stuck
+
+# --- variable for Goal Detection --- #
 Gkp = 0.7							#Proportional Gain for Goal
 maxMP = 60							#Maximum Motor Power
 mp_min = 20							#motor power for Low level
@@ -125,12 +129,13 @@ goalDetectionLog =	"/home/pi/log/goalDetectionLog.txt"
 captureLog = 		"/home/pi/log/captureLog.txt"
 missionLog = 		"/home/pi/log/missionLog.txt"
 calibrationLog = 	"/home/pi/log/calibrationLog"
+stuckLog = 			"/home/pi/log/stuckLog"
 errorLog = 			"/home/pi/log/erroLog.txt"
 
 photopath = 		"/home/pi/photo/photo"
 photoName =			""
 
-pi=pigpio.pi()	#object to set pigpio
+pi = pigpio.pi()	#object to set pigpio
 
 
 def setup():
@@ -317,6 +322,7 @@ if __name__ == "__main__":
 			while(not RunningGPS.checkGPSstatus(gpsData)):
 				gpsData = GPS.readGPS()
 				time.sleep(1)
+			stuckMode = Runnning.RunningGPS(gpsData[1], gpsData[2])
 
 			t_calib_origin = time.time() - timeout_calibration - 20
 			t_takePhoto_start = time.time()
@@ -348,8 +354,18 @@ if __name__ == "__main__":
 					Motor.motor(0, 0, 0.5)
 					photoName = Capture.Capture(photopath)
 					Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
+					gpsData = GPS.readGPS()
+					while(not RunningGPS.checkGPSstatus(gpsData)):
+						gpsData = GPS.readGPS()
+						time.sleep(1)
+					stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
+					if(stuckMode[0] == 1)
+						fileStuck = Other.fileName(stuckLog, "txt")
+						Other.saveLog(fileStuck, time.time() - t_start, gpsData, stuckMode)
+						if(stuckMode[1] >= 2)
+							Motor.motor(60, 60, 5)
 					t_takePhoto_start = time.time()
-				 	
+
 				# --- Calculate disGoal and relAng and Motor Power --- #
 				nAng = RunningGPS.calNAng(ellipseScale, angOffset)			#Calculate Rover Angle
 				relAng[2] = relAng[1]
