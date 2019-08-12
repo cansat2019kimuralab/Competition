@@ -311,7 +311,7 @@ if __name__ == "__main__":
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Finished")
 			IM920.Send("P6F")
 		# --------------------Transmit Image Phase-------------------#
-		wireless_transmitter.changesize(photopath,readmode)
+		wireless_transmitter.changesize(photoname,readmode)
 		byte,mode=wireless_transmitter.selectphoto('/home/pi/git/kimuralab/Mission/sendPhoto.jpg',readmode)
 		print("image ready")
 
