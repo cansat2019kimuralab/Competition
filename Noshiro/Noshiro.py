@@ -325,13 +325,17 @@ if __name__ == "__main__":
 			IM920.Send("P6F")
 		# --------------------Transmit Image Phase-------------------#
 		t_transmit_start=time.time()
-		while(time.time()-t_transmit_start<=t_transmit):
-			wireless_transmitter.changesize(photoName)
-			byte,mode=wireless_transmitter.selectphoto('/home/pi/git/kimuralab/Mission/sendPhoto.jpg',readmode)
-			print("image ready")
+		wireless_transmitter.changesize(photoName)
+		byte,mode=wireless_transmitter.selectphoto('/home/pi/git/kimuralab/Mission/sendPhoto.jpg',readmode)
+		print("image ready")
 
-			while mode:
-				mode=wireless_transmitter.transmitdata()
+		while mode:
+			if(time.time() - t_transmit_start > t_transmit):
+				mode = 0
+				break
+			mode=wireless_transmitter.transmitdata()
+		print("mode:" + str(mode))
+		if mode == 1:
 			print("transmit start")
 			t_start=time.time()
 			wireless_transmitter.sendphoto(byte)
