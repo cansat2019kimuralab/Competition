@@ -323,23 +323,6 @@ if __name__ == "__main__":
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), photoName, paraExsist, paraArea)
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Finished")
 			IM920.Send("P6F")
-		# --------------------Transmit Image Phase-------------------#
-		t_transmit_start=time.time()
-		wireless_transmitter.changesize(photoName)
-		byte,mode=wireless_transmitter.selectphoto('/home/pi/git/kimuralab/Mission/sendPhoto.jpg',readmode)
-		print("image ready")
-
-		while mode:
-			if(time.time() - t_transmit_start > t_transmit):
-				mode = 0
-				break
-			mode=wireless_transmitter.transmitdata()
-		print("mode:" + str(mode))
-		if mode == 1:
-			print("transmit start")
-			t_start=time.time()
-			wireless_transmitter.sendphoto(byte)
-			print(time.time()-t_start)
 	
 		# ------------------- Running Phase ------------------- #
 		if(phaseChk <= 7):
@@ -347,6 +330,25 @@ if __name__ == "__main__":
 			print("Running Phase Started")
 			IM920.Send("P7S")
 
+			# --------------------Transmit Image Phase-------------------#
+			wireless_transmitter.changesize(photoName)
+			byte,mode=wireless_transmitter.selectphoto('/home/pi/git/kimuralab/Mission/sendPhoto.jpg',readmode)
+			print("image ready")
+			t_transmit_start=time.time()
+
+			while mode:
+				if(time.time() - t_transmit_start > t_transmit):
+					mode = 0
+					break
+				else:
+					mode=wireless_transmitter.transmitdata()
+			print("mode:" + str(mode))
+			if mode == 1:
+				print("transmit start")
+				t_start=time.time()
+				wireless_transmitter.sendphoto(byte)
+				print(time.time()-t_start)
+	
 			# --- Read GPS Data --- #
 			while(not RunningGPS.checkGPSstatus(gpsData)):
 				gpsData = GPS.readGPS()
