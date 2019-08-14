@@ -55,7 +55,7 @@ t_sleep = 10				#time for sleep phase
 t_release = 30				#time for release(loopx)
 t_land = 300				#time for land(loopy)
 t_melt = 5					#time for melting
-t_transmit = 600			#time for transmit limit
+t_transmit = 30			#time for transmit limit
 t_sleep_start = 0			#time for sleep origin
 t_release_start = 0			#time for release origin
 t_land_start = 0			#time for land origin
@@ -111,18 +111,18 @@ ellipseScale = [0.0, 0.0, 0.0, 0.0] #Convert coefficient Ellipse to Circle
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon = 35.918383, 139.9079	#Coordinates of That time
+gLat, gLon = 40.142733, 139.987463	#Coordinates of That time
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
 rAng = 0.0							#Median of relAng [deg]
 mP, mPL, mPR, mPS = 0, 0, 0, 0		#Motor Power
-kp = 0.8							#Proportional Gain
+kp = 0.9							#Proportional Gain
 stuckMode = [0, 0]					#Variable for Stuck
 
 # --- variable for Goal Detection --- #
 Gkp = 0.7							#Proportional Gain for Goal
-maxMP = 60							#Maximum Motor Power
+maxMP = 70							#Maximum Motor Power
 mp_min = 20							#motor power for Low level
 mp_max = 50							#motor power fot High level
 mp_adj = 2							#adjust motor power
@@ -171,7 +171,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 6
+	#phaseChk = 6
 
 def close():
 	GPS.closeGPS()
@@ -264,7 +264,7 @@ if __name__ == "__main__":
 				    print("Descend now taking photo")
 				#elif pressjudge == 1 : #or gpsjudge == 1:
 				#print("Landing JudgementNow")
-				
+
 				# --- Save Log and Take Photo--- #
 				for i in range(3):
 					Other.saveLog(landingLog ,time.time() - t_start, Pcount, gacount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
@@ -323,14 +323,17 @@ if __name__ == "__main__":
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), photoName, paraExsist, paraArea)
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Finished")
 			IM920.Send("P6F")
-	
+
 		# ------------------- Running Phase ------------------- #
 		if(phaseChk <= 7):
 			Other.saveLog(phaseLog, "7", "Running Phase Started", time.time() - t_start)
 			print("Running Phase Started")
 			IM920.Send("P7S")
 
-			# --------------------Transmit Image Phase-------------------#
+			
+			#--nsmit Image Phase-----#
+			photoName = Capture.Capture(photopath)
+			Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 			wireless_transmitter.changesize(photoName)
 			byte,mode=wireless_transmitter.selectphoto('/home/pi/git/kimuralab/Mission/sendPhoto.jpg',readmode)
 			print("image ready")
@@ -338,18 +341,21 @@ if __name__ == "__main__":
 
 			while mode:
 				if(time.time() - t_transmit_start > t_transmit):
+					print("timeout")
 					mode = 0
 					break
 				else:
-					mode=wireless_transmitter.transmitdata()
+					mode = wireless_transmitter.transmitdata()
 			print("mode:" + str(mode))
-			if mode == 1:
+			if mode == 0:
 				print("transmit start")
 				t_start=time.time()
 				wireless_transmitter.sendphoto(byte)
 				print(time.time()-t_start)
-	
+			
+
 			# --- Read GPS Data --- #
+			print("Read GPS Data")
 			while(not RunningGPS.checkGPSstatus(gpsData)):
 				gpsData = GPS.readGPS()
 				time.sleep(1)
@@ -394,7 +400,7 @@ if __name__ == "__main__":
 						Other.saveLog(stuckLog, time.time() - t_start, gpsData, stuckMode)
 						if(stuckMode[1] >= 2):
 							print("Stuck" + str(stuckMode))
-							Motor.motor(60, 60, 5)
+							Motor.motor(65, 60, 5)
 					t_takePhoto_start = time.time()
 
 				# --- Calculate disGoal and relAng and Motor Power --- #
