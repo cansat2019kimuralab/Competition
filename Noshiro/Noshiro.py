@@ -167,12 +167,16 @@ def setup():
 	#phaseChk = 6
 
 def transmitphoto():
+	global t_start
+	global t_transmit
+	global t_transmit_start
+	global mode
+	t_transmit_start = time.time()
 	photoName = Capture.Capture(photopath)
 	Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 	wireless_transmitter.changesize(photoName)
 	byte,mode=wireless_transmitter.selectphoto('/home/pi/git/kimuralab/Mission/sendPhoto.jpg',readmode)
 	print("image ready")
-	t_transmit_start=time.time()
 
 	while mode:
 		if(time.time() - t_transmit_start > t_transmit):
@@ -184,9 +188,10 @@ def transmitphoto():
 	print("mode:" + str(mode))
 	if mode == 0:
 		print("transmit start")
-		t_start=time.time()
+		t_send_start = time.time()
 		wireless_transmitter.sendphoto(byte)
-		print(time.time()-t_start)
+		print(time.time()-t_send_start)
+
 def close():
 	GPS.closeGPS()
 	pi.write(22, 1)		#IM920 Turn On
