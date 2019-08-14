@@ -166,6 +166,27 @@ def setup():
 	#if it is debug
 	#phaseChk = 6
 
+def transmitphoto():
+	photoName = Capture.Capture(photopath)
+	Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
+	wireless_transmitter.changesize(photoName)
+	byte,mode=wireless_transmitter.selectphoto('/home/pi/git/kimuralab/Mission/sendPhoto.jpg',readmode)
+	print("image ready")
+	t_transmit_start=time.time()
+
+	while mode:
+		if(time.time() - t_transmit_start > t_transmit):
+			print("timeout")
+			mode = 0
+			break
+		else:
+			mode = wireless_transmitter.transmitdata()
+	print("mode:" + str(mode))
+	if mode == 0:
+		print("transmit start")
+		t_start=time.time()
+		wireless_transmitter.sendphoto(byte)
+		print(time.time()-t_start)
 def close():
 	GPS.closeGPS()
 	pi.write(22, 1)		#IM920 Turn On
@@ -323,29 +344,8 @@ if __name__ == "__main__":
 			print("Running Phase Started")
 			IM920.Send("P7S")
 
-
 			# --- Transmit Image --- #
-			photoName = Capture.Capture(photopath)
-			Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
-			wireless_transmitter.changesize(photoName)
-			byte,mode=wireless_transmitter.selectphoto('/home/pi/git/kimuralab/Mission/sendPhoto.jpg',readmode)
-			print("image ready")
-			t_transmit_start=time.time()
-
-			while mode:
-				if(time.time() - t_transmit_start > t_transmit):
-					print("timeout")
-					mode = 0
-					break
-				else:
-					mode = wireless_transmitter.transmitdata()
-			print("mode:" + str(mode))
-			if mode == 0:
-				print("transmit start")
-				t_start=time.time()
-				wireless_transmitter.sendphoto(byte)
-				print(time.time()-t_start)
-
+			transmitphoto()
 
 			# --- Read GPS Data --- #
 			print("Read GPS Data")
@@ -418,6 +418,10 @@ if __name__ == "__main__":
 			Other.saveLog(phaseLog, "8", "GoalDetection Phase Started", time.time() - t_start)
 			print("Goal Detection Phase Started")
 			IM920.Send("P8S")
+			
+			# --- Transmit Image --- #
+			transmitphoto()
+
 			while goalFlug != 0 or goalBufFlug != 0:
 				gpsdata = GPS.readGPS()
 				goalBuf = goalFlug
@@ -479,6 +483,17 @@ if __name__ == "__main__":
 		print("Program Finished")
 		IM920.Send("P10")
 		Other.saveLog(phaseLog, "10", "Program Finished", time.time() - t_start)
+		
+		# --- Transmit Image --- #
+		transmitphoto()
+		time.sleep(1)
+		
+		# --- Transmit Image --- #
+		transmitphoto()
+		time.sleep(1)
+		
+		# --- Transmit Image --- #
+		transmitphoto()
 		close()
 	except KeyboardInterrupt:
 		close()
