@@ -323,8 +323,8 @@ if __name__ == "__main__":
 			print("Running Phase Started")
 			IM920.Send("P7S")
 
-			
-			#--nsmit Image Phase-----#
+
+			# --- Transmit Image --- #
 			photoName = Capture.Capture(photopath)
 			Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 			wireless_transmitter.changesize(photoName)
@@ -345,7 +345,7 @@ if __name__ == "__main__":
 				t_start=time.time()
 				wireless_transmitter.sendphoto(byte)
 				print(time.time()-t_start)
-			
+
 
 			# --- Read GPS Data --- #
 			print("Read GPS Data")
@@ -485,10 +485,13 @@ if __name__ == "__main__":
 		print("Keyboard Interrupt")
 		IM920.Send("KI")
 	except:
-		close()
+		pi.write(17, 0)
+		pi.write(22, 1)
+		Motor.motor(0, 0, 1)
 		print(traceback.format_exc())
 		Other.saveLog(errorLog, time.time() - t_start, "Error")
 		Other.saveLog(errorLog, traceback.format_exc())
 		Other.saveLog(errorLog, "\n")
 		IM920.Send("EO")
 		#os.system('sudo reboot')
+		close()
