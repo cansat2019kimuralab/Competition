@@ -86,18 +86,12 @@ paraExsist = 0 		#variable for Para Detection    0:Not Exsist, 1:Exsist
 goalFlug = -1		#variable for GoalDetection		-1:Not Detect, 0:Goal, 1:Detect
 goalBufFlug = -1	#variable for GoalDetection buf
 goalArea = 0		#variable for goal area
-goalnowAng = 1		#variable for goal angle
-goalBufAng = 1		#variable for goal angle buf
 goalGAP = -1		#variable for goal gap
 goalthd = 20000		#variable for goal area thd
-goalRelativeAng = 0	#variable fot goal relative angle
+goalcount = 0		#variable for Noshiro
 H_min = 200			#Hue minimam
 H_max = 10			#Hue maximam
 S_thd = 120			#Saturation threshold
-areaSamp = 10000	#sample for goal
-LSamp = 1.0			#sample for goal
-GAPSamp = 140		#sample for goal
-xSamp = 0.4			#sample for goal
 bomb = 0			#use for goalDete flug
 
 # --- variable for Transmit --- #
@@ -121,11 +115,10 @@ kp = 0.8							#Proportional Gain
 stuckMode = [0, 0]					#Variable for Stuck
 
 # --- variable for Goal Detection --- #
-Gkp = 0.7							#Proportional Gain for Goal
 maxMP = 60							#Maximum Motor Power
 mp_min = 20							#motor power for Low level
-mp_max = 50							#motor power fot High level
-mp_adj = 2							#adjust motor power
+mp_max = 70							#motor power fot High level
+mp_adj = -5							#adjust motor power
 
 # --- variable of Log path --- #
 phaseLog =			"/home/pi/log/phaseLog.txt"
@@ -421,28 +414,17 @@ if __name__ == "__main__":
 			IM920.Send("P8S")
 			while goalFlug != 0 or goalBufFlug != 0:
 				gpsdata = GPS.readGPS()
-				goalBufFlug = goalFlug
-				#-----------------calibration---------------------#
-				if time.time() - t_paraDete_start > timeout_calibration:
-					fileCal = Other.fileName(calibrationLog, "txt")
-					Motor.motor(60, 0, 2)
-					Calibration.readCalData(fileCal)
-					Motor.motor(0, 0, 1)
-					ellipseScale = Calibration.Calibration(fileCal)
-					Other.saveLog(fileCal, ellipseScale)
-					t_goalDete_start = time.time()
-	
+				goalBuf = goalFlug
 				Motor.motor(0,0,0.5)
-				Motor.motor(15,15,0.3)
-				Motor.motor(0,0,0.3)
+				Motor.motor(15,15,0.5)
+				Motor.motor(0,0,0.5)
 				#-----------------get information-----------------#
 				goalFlug, goalArea, goalGAP, photoName = goal_detection.GoalDetection(photopath, H_min, H_max, S_thd, goalthd)
 				print("flug", goalFlug, "area", goalArea, "GAP", goalGAP)
-				#print("bomb",bomb)	
-				goalnowAng = RunningGPS.calNAng(ellipseScale, angOffset)
+				#print("bomb",bomb)
 				#--------------------goal---------------------#
 				if goalFlug == 0:
-					Motor.motor(40, 40 + mp_adj, 1.5)
+					Motor.motor(60, 60 + mp_adj, 1.5)
 					Motor.motor(0, 0, 3)				
 				#------------------not detect----------------------#
 				elif goalFlug == -1:
@@ -454,50 +436,33 @@ if __name__ == "__main__":
 						bomb = 0
 				#---------------detect but no goal-------------#
 				else:
-					#-----------------target left------------------#
-					if goalArea < 10000 and goalArea > 0 and goalGAP < 0:
-						LR2G, angR2G = goal_detection.calR2G(goalArea, goalGAP, areaSamp, LSamp, xSamp, GAPSamp)
-						goalBufAng = RunningGPS.calNAng(ellipseScale, angOffset)
-						tbomb = time.time()
-						while time.time() - tbomb < 4:
-							goalnowAng = RunningGPS.calNAng(ellipseScale, angOffset)
-							goalRelativeAng = angR2G + goalBufAng - goalnowAng
-							goalRelativeAng = goalRelativeAng if goalRelativeAng <= 180 else goalRelativeAng - 360
-							goalRelativeAng = goalRelativeAng if goalRelativeAng >= -180 else goalRelativeAng + 360
-							print("goalRelativeAng",goalRelativeAng)
-							print('difang', goalnowAng - goalBufAng)
-							mPL, mPR, mPS = RunningGPS.runMotorSpeed(goalRelativeAng, Gkp, mp_max)
-							Motor.motor(mPL, mPR, 0.001, 1)
-							print("mPL",mPL,"mPR",mPR)
-						Motor.motor(0, 0, 0.5)
-						bomb = 1
-					#----------------------target right------------------------#
-					elif goalArea < 10000 and goalArea > 0 and goalGAP >= 0:
-						LR2G, angR2G = goal_detection.calR2G(goalArea, goalGAP, areaSamp, LSamp, xSamp, GAPSamp)
-						goalBufAng = RunningGPS.calNAng(ellipseScale, angOffset)
-						tbomb = time.time()
-						while time.time() - tbomb < 4:
-							goalnowAng = RunningGPS.calNAng(ellipseScale, angOffset)
-							goalRelativeAng = -angR2G + goalBufAng - goalnowAng
-							print("goalRelativeAng",goalRelativeAng)
-							print('difang', goalnowAng - goalBufAng)
-							mPL, mPR, mPS = RunningGPS.runMotorSpeed(goalRelativeAng, Gkp, mp_max)
-							Motor.motor(mPL, mPR, 0.001, 1)
-							print("mPL",mPL,"mPR",mPR)
-						Motor.motor(0, 0, 0.5)
-						bomb = 0
-					#-----------------near the target------------------#
-					elif goalArea >= 10000 and goalGAP < 0:
-						MP = goal_detection.curvingSwitch(goalGAP,10)
-						Motor.motor(mp_min, mp_max + MP + mp_adj, 0.3)
-						bomb = 1
-	
-					elif goalArea >= 10000 and goalGAP >= 0:
-						MP = goal_detection.curvingSwitch(goalGAP,10)
-						Motor.motor(mp_max + MP, mp_min + mp_adj, 0.3)
-						bomb = 0
-					else:
-						print("error")
+					if goalcount == 0:
+						#-----------------target left------------------#
+						if goalArea < 10000 and goalArea > 0 and goalGAP < 0:
+							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
+							Motor.motor(mp_max, mp_max + MP + mp_adj, 5)
+							bomb = 1
+							goalcount = 1
+						#----------------------target right------------------------#
+						elif goalArea < 10000 and goalArea > 0 and goalGAP >= 0:
+							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
+							Motor.motor(mp_max + MP, mp_max + mp_adj, 5)
+							bomb = 0
+							goalcount = 1
+					else:	
+						#-----------------near the target------------------#
+						if goalGAP < 0:
+							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
+							Motor.motor(mp_min, mp_max + MP + mp_adj, 1.0)
+							bomb = 1
+							goalcount = 1
+						elif goalGAP >= 0:
+							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
+							Motor.motor(mp_max + MP, mp_min + mp_adj, 1.0)
+							bomb = 0
+							goalcount = 1
+						else:
+							print("error")
 				Other.saveLog(goalDetectionLog, time.time() - t_start, gpsData, goalFlug, goalArea, goalGAP, photoName)
 				Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 				IM920.Send("P8D")
