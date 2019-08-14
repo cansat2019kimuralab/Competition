@@ -111,7 +111,7 @@ nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
 rAng = 0.0							#Median of relAng [deg]
 mP, mPL, mPR, mPS = 0, 0, 0, 0		#Motor Power
-kp = 0.9							#Proportional Gain
+kp = 1.0							#Proportional Gain
 stuckMode = [0, 0]					#Variable for Stuck
 
 # --- variable for Goal Detection --- #
@@ -393,7 +393,7 @@ if __name__ == "__main__":
 						Other.saveLog(stuckLog, time.time() - t_start, gpsData, stuckMode)
 						if(stuckMode[1] >= 2):
 							print("Stuck" + str(stuckMode))
-							Motor.motor(65, 60, 5)
+							Motor.motor(70, 65, 5)
 					t_takePhoto_start = time.time()
 
 				# --- Calculate disGoal and relAng and Motor Power --- #
