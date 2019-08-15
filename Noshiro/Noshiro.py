@@ -51,9 +51,9 @@ phaseChk = 0	#variable for phase Check
 
 # --- variable of time setting --- #
 t_start  = 0.0				#time when program started
-t_sleep = 10				#time for sleep phase
-t_release = 30				#time for release(loopx)
-t_land = 300				#time for land(loopy)
+t_sleep = 60				#time for sleep phase
+t_release = 210				#time for release(loopx)
+t_land = 210				#time for land(loopy)
 t_melt = 5					#time for melting
 t_transmit = 30			#time for transmit limit
 t_sleep_start = 0			#time for sleep origin
@@ -67,6 +67,8 @@ t_goalDete_start = 0
 timeout_calibration = 180	#time for calibration timeout
 timeout_parachute = 60
 timeout_takePhoto = 10		#time for taking photo timeout
+timeout_goalDete = 180
+
 
 # --- variable for storing sensor data --- #
 gpsData = [0.0,0.0,0.0,0.0,0.0]						#variable to store GPS data
@@ -91,7 +93,7 @@ goalthd = 20000		#variable for goal area thd
 goalcount = 0		#variable for Noshiro
 H_min = 200			#Hue minimam
 H_max = 10			#Hue maximam
-S_thd = 120			#Saturation threshold
+S_thd = 150			#Saturation threshold
 bomb = 0			#use for goalDete flug
 
 # --- variable for Transmit --- #
@@ -119,6 +121,7 @@ maxMP = 70							#Maximum Motor Power
 mp_min = 20							#motor power for Low level
 mp_max = 70							#motor power fot High level
 mp_adj = -5							#adjust motor power
+adj_add = 20
 
 # --- variable of Log path --- #
 phaseLog =			"/home/pi/log/phaseLog.txt"
@@ -164,7 +167,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	#phaseChk = 6
+	#phaseChk = 8
 
 def transmitphoto():
 	global t_start
@@ -181,7 +184,7 @@ def transmitphoto():
 	while mode:
 		if(time.time() - t_transmit_start > t_transmit):
 			print("timeout")
-			mode = 0
+			mode = 1
 			break
 		else:
 			mode = wireless_transmitter.transmitdata()
@@ -207,6 +210,7 @@ if __name__ == "__main__":
 
 		#-----setup phase ---------#
 		setup()
+		IM920.Send("P0S")
 		print("Start Phase is {0}".format(phaseChk))
 		if(phaseChk <= 1):
 			IM920.Send("P1S")
@@ -331,7 +335,7 @@ if __name__ == "__main__":
 				if paraExsist == 1:
 					Motor.motor(-60, -60, 5)
 					Motor.motor(0, 0, 2)
-					Motor.motor(50, 10, 1.0)
+					Motor.motor(50, 10, 3.0)
 					Motor.motor(0, 0, 2)
 
 				if paraExsist == 0:
@@ -350,6 +354,7 @@ if __name__ == "__main__":
 			IM920.Send("P7S")
 
 			# --- Transmit Image --- #
+			time.sleep(60)
 			transmitphoto()
 
 			# --- Read GPS Data --- #
@@ -372,9 +377,10 @@ if __name__ == "__main__":
 				if(time.time() - t_calib_origin > timeout_calibration):
 					#Every [timeout_calibratoin] second,  Calibrate
 					Motor.motor(0, 0, 2)
+					IM920.Send("P7D")
 					print("Calibration")
 					fileCal = Other.fileName(calibrationLog, "txt")
-					Motor.motor(50, 10, 2)
+					Motor.motor(60, 10, 2)
 					Calibration.readCalData(fileCal)
 					Motor.motor(0, 0, 1)
 					ellipseScale = Calibration.Calibration(fileCal)
@@ -387,6 +393,7 @@ if __name__ == "__main__":
 					Motor.motor(0, 0, 2)
 					Motor.motor(30, 30, 0.5)
 					Motor.motor(0, 0, 0.5)
+					IM920.Send("P7D")
 					photoName = Capture.Capture(photopath)
 					Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 					gpsData = GPS.readGPS()
@@ -427,15 +434,19 @@ if __name__ == "__main__":
 			# --- Transmit Image --- #
 			transmitphoto()
 
+			t_goalDete_start = time.time()
 			while goalFlug != 0 or goalBufFlug != 0:
+				if time.time() - t_goalDete_start > timeout_goalDete:
+					break
 				gpsdata = GPS.readGPS()
 				goalBuf = goalFlug
 				Motor.motor(0,0,0.5)
 				Motor.motor(15,15,0.5)
 				Motor.motor(0,0,0.5)
-				#-----------------get information-----------------#
+				#--et-----------#----ginformation--
+				IM920.Send("P8D")
 				goalFlug, goalArea, goalGAP, photoName = goal_detection.GoalDetection(photopath, H_min, H_max, S_thd, goalthd)
-				print("flug", goalFlug, "area", goalArea, "GAP", goalGAP)
+				#print("flug", goalFlug, "area", goalArea, "GAP", goalGAP)
 				#print("bomb",bomb)
 				#--------------------goal---------------------#
 				if goalFlug == 0:
@@ -513,5 +524,5 @@ if __name__ == "__main__":
 		Other.saveLog(errorLog, traceback.format_exc())
 		Other.saveLog(errorLog, "\n")
 		IM920.Send("EO")
-		#os.system('sudo reboot')
+		os.system('sudo reboot')
 		close()
