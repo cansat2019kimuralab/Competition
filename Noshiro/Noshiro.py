@@ -119,6 +119,7 @@ maxMP = 70							#Maximum Motor Power
 mp_min = 20							#motor power for Low level
 mp_max = 70							#motor power fot High level
 mp_adj = -5							#adjust motor power
+adj_add = 20
 
 # --- variable of Log path --- #
 phaseLog =			"/home/pi/log/phaseLog.txt"
@@ -164,7 +165,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	#phaseChk = 6
+	phaseChk = 8
 
 def transmitphoto():
 	global t_start
@@ -425,7 +426,7 @@ if __name__ == "__main__":
 			IM920.Send("P8S")
 			
 			# --- Transmit Image --- #
-			transmitphoto()
+			#transmitphoto()
 
 			while goalFlug != 0 or goalBufFlug != 0:
 				gpsdata = GPS.readGPS()
