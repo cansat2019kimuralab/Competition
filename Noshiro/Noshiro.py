@@ -67,6 +67,7 @@ t_goalDete_start = 0
 timeout_calibration = 180	#time for calibration timeout
 timeout_parachute = 60
 timeout_takePhoto = 10		#time for taking photo timeout
+timeout_goalDete = 180
 
 # --- variable for storing sensor data --- #
 gpsData = [0.0,0.0,0.0,0.0,0.0]						#variable to store GPS data
@@ -427,9 +428,12 @@ if __name__ == "__main__":
 			IM920.Send("P8S")
 			
 			# --- Transmit Image --- #
-			#transmitphoto()
+			transmitphoto()
 
+			t_goalDete_start = time.time()
 			while goalFlug != 0 or goalBufFlug != 0:
+				if time.time() - t_goalDete_start > timeout_goalDete:
+					break
 				gpsdata = GPS.readGPS()
 				goalBuf = goalFlug
 				Motor.motor(0,0,0.5)
