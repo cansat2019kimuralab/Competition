@@ -82,6 +82,7 @@ gacount=0			#GPSheight count for land
 luxjudge = 0		#for release
 pressjudge = 0		#for release and land
 gpsjudge = 0		#for land
+LuxThd = 70			#variable for cover para
 paraExsist = 0 		#variable for Para Detection    0:Not Exsist, 1:Exsist
 goalFlug = -1		#variable for GoalDetection		-1:Not Detect, 0:Goal, 1:Detect
 goalBufFlug = -1	#variable for GoalDetection buf
@@ -91,7 +92,7 @@ goalthd = 20000		#variable for goal area thd
 goalcount = 0		#variable for Noshiro
 H_min = 200			#Hue minimam
 H_max = 10			#Hue maximam
-S_thd = 120			#Saturation threshold
+S_thd = 130			#Saturation threshold
 bomb = 0			#use for goalDete flug
 
 # --- variable for Transmit --- #
@@ -318,25 +319,25 @@ if __name__ == "__main__":
 			print("START: Judge covered by Parachute")
 			t_paraDete_start = time.time()
 			while time.time() - t_paraDete_start < timeout_parachute:
-				paraLuxflug, paraLux = ParaDetection.ParaJudge(70)
-				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), paraLuxflug, paraLux)
+				paraLuxflug, paraLux = ParaDetection.ParaJudge(LuxThd)
+				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), paraLuxflug, paraLux, LuxThd)
 				if paraLuxflug == 1:
 					break
 
 			print("START: Parachute avoidance")
 			for i in range(2):	#Avoid Parachute two times
 				Motor.motor(30, 30, 0.5)
-				Motor.motor(0, 0, 0.2)
-				paraExsist, paraArea, photoName = ParaDetection.ParaDetection(photopath, 200, 10, 120)
+				Motor.motor(0, 0, 0.5)
+				paraExsist, paraArea, photoName = ParaDetection.ParaDetection(photopath, H_min, H_max, S_thd)
 
 				if paraExsist == 1:
-					Motor.motor(-60, -60, 5)
+					Motor.motor(-mp_max, -mp_max, 5)
 					Motor.motor(0, 0, 2)
-					Motor.motor(50, 10, 1.0)
+					Motor.motor(mp_max, mp_min, 1.0)
 					Motor.motor(0, 0, 2)
 
 				if paraExsist == 0:
-					Motor.motor(60, 60, 5)
+					Motor.motor(mp_max, mp_max, 5)
 					Motor.motor(0 ,0, 2)
 
 				Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
@@ -456,13 +457,13 @@ if __name__ == "__main__":
 						#-----------------target left------------------#
 						if goalArea < 10000 and goalArea > 0 and goalGAP < 0:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-							Motor.motor(mp_max, mp_max + MP + mp_adj, 5)
+							Motor.motor(mp_max, mp_max + MP + mp_adj, 8)
 							bomb = 1
 							goalcount = 1
 						#----------------------target right------------------------#
 						elif goalArea < 10000 and goalArea > 0 and goalGAP >= 0:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-							Motor.motor(mp_max + MP, mp_max + mp_adj, 5)
+							Motor.motor(mp_max + MP, mp_max + mp_adj, 8)
 							bomb = 0
 							goalcount = 1
 					else:	
