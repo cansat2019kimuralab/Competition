@@ -85,6 +85,10 @@ gacount=0			#GPSheight count for land
 luxjudge = 0		#for release
 pressjudge = 0		#for release and land
 gpsjudge = 0		#for land
+stuckFlug = 0
+stuckThd = 100
+measureCount = 30
+CountThd = 10
 LuxThd = 70			#variable for cover para
 paraExsist = 0 		#variable for Para Detection    0:Not Exsist, 1:Exsist
 goalFlug = -1		#variable for GoalDetection		-1:Not Detect, 0:Goal, 1:Detect
@@ -328,7 +332,7 @@ if __name__ == "__main__":
 					break
 			#-----------------stackDete---------------------#
 			Motor.motor(15, 15, 0.9)
-			stuckFlug = Stuck.BMXstuckDetection(50, 100, 30, 10)
+			stuckFlug = Stuck.BMXstuckDetection(mp_max, stuckThd, measureCount, CountThd)
 			if stuckFlug == 1:
 				Motor.motor(-50, 50, 1)
 				Motor.motor(50, -50, 1)
@@ -453,7 +457,7 @@ if __name__ == "__main__":
 				Motor.motor(0,0,0.5)
 				#-----------------stackDete---------------------#
 				if time.time() - t_stuckDete_start > timeout_stuck:
-					stuckFlug = Stuck.BMXstuckDetection(50, 100, 50, 10)
+					stuckFlug = Stuck.BMXstuckDetection(mp_max, stuckThd, measureCount, CountThd)
 					if stuckFlug == 1:
 						Motor.motor(50, 50, 1)
 						Motor.motor(-50, -50, 1)
