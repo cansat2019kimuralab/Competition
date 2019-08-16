@@ -64,9 +64,12 @@ t_calib_origin = 0			#time for calibration origin
 t_paraDete_start = 0
 t_takePhoto_start = 0		#time for taking photo
 t_goalDete_start = 0
+t_stuckDete_start = 0
 timeout_calibration = 180	#time for calibration timeout
 timeout_parachute = 60
 timeout_takePhoto = 10		#time for taking photo timeout
+timeout_goalDete = 180
+timeout_stuck = 30
 
 # --- variable for storing sensor data --- #
 gpsData = [0.0,0.0,0.0,0.0,0.0]						#variable to store GPS data
@@ -315,7 +318,7 @@ if __name__ == "__main__":
 
 			print("ParaAvoidance Phase Started")
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Start")
-
+			#-----------------Parachute Judge---------------------#
 			print("START: Judge covered by Parachute")
 			t_paraDete_start = time.time()
 			while time.time() - t_paraDete_start < timeout_parachute:
@@ -323,10 +326,19 @@ if __name__ == "__main__":
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), paraLuxflug, paraLux, LuxThd)
 				if paraLuxflug == 1:
 					break
-
+			#-----------------stackDete---------------------#
+			Motor.motor(15, 15, 0.9)
+			stuckFlug = Stuck.BMXstuckDetection(50, 100, 30, 10)
+			if stuckFlug == 1:
+				Motor.motor(-50, 50, 1)
+				Motor.motor(50, -50, 1)
+				Motor.motor(-50, 50, 1)
+				Motor.motor(50, -50, 1)
+				Motor.motor(0, 0, 2)
+			#-----------------Parachute Avoidance---------------------#
 			print("START: Parachute avoidance")
 			for i in range(2):	#Avoid Parachute two times
-				Motor.motor(30, 30, 0.5)
+				Motor.motor(15, 15, 0.9)
 				Motor.motor(0, 0, 0.5)
 				paraExsist, paraArea, photoName = ParaDetection.ParaDetection(photopath, H_min, H_max, S_thd)
 
@@ -427,14 +439,28 @@ if __name__ == "__main__":
 			IM920.Send("P8S")
 			
 			# --- Transmit Image --- #
-			#transmitphoto()
+			transmitphoto()
 
+			t_goalDete_start = time.time()
+			t_stuckDete_start = time.time()
 			while goalFlug != 0 or goalBufFlug != 0:
+				if time.time() - t_goalDete_start > timeout_goalDete:
+					break
 				gpsdata = GPS.readGPS()
 				goalBuf = goalFlug
 				Motor.motor(0,0,0.5)
-				Motor.motor(15,15,0.5)
+				Motor.motor(15,15,0.9)
 				Motor.motor(0,0,0.5)
+				#-----------------stackDete---------------------#
+				if time.time() - t_stuckDete_start > timeout_stuck:
+					stuckFlug = Stuck.BMXstuckDetection(50, 100, 50, 10)
+					if stuckFlug == 1:
+						Motor.motor(50, 50, 1)
+						Motor.motor(-50, -50, 1)
+						Motor.motor(50, -50, 1)
+						Motor.motor(-50, 50, 1)
+						Motor.motor(0, 0, 2)
+					t_stuckDete_start = time.time()
 				#-----------------get information-----------------#
 				goalFlug, goalArea, goalGAP, photoName = goal_detection.GoalDetection(photopath, H_min, H_max, S_thd, goalthd)
 				print("flug", goalFlug, "area", goalArea, "GAP", goalGAP)
