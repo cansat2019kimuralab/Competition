@@ -167,7 +167,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 8
+	phaseChk = 7
 
 def transmitphoto():
 	global t_start
