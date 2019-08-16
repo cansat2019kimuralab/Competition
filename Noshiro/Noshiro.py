@@ -44,6 +44,7 @@ import ParaAvoidance
 import Release
 import RunningGPS
 import Stuck
+import stuckDetection
 import TSL2561
 import wireless_transmitter
 
@@ -173,7 +174,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 7
+	phaseChk = 8
 
 def transmitphoto():
 	global t_start
@@ -332,7 +333,7 @@ if __name__ == "__main__":
 					break
 			#-----------------stackDete---------------------#
 			Motor.motor(15, 15, 0.9)
-			stuckFlug = Stuck.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
+			stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
 			if stuckFlug == 1:
 				Motor.motor(-50, 50, 1)
 				Motor.motor(50, -50, 1)
@@ -443,7 +444,7 @@ if __name__ == "__main__":
 			IM920.Send("P8S")
 			
 			# --- Transmit Image --- #
-			transmitphoto()
+			#transmitphoto()
 
 			t_goalDete_start = time.time()
 			t_stuckDete_start = time.time()
@@ -457,7 +458,7 @@ if __name__ == "__main__":
 				Motor.motor(0,0,0.5)
 				#-----------------stackDete---------------------#
 				if time.time() - t_stuckDete_start > timeout_stuck:
-					stuckFlug = Stuck.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
+					stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
 					if stuckFlug == 1:
 						Motor.motor(50, 50, 1)
 						Motor.motor(-50, -50, 1)
