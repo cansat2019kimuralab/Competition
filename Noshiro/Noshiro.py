@@ -328,12 +328,12 @@ if __name__ == "__main__":
 					break
 			#-----------------stackDete---------------------#
 			Motor.motor(15, 15, 0.9)
-			stuckFlug = Stuck.BMXstuckDetection(50, 100, 50, 10)
+			stuckFlug = Stuck.BMXstuckDetection(50, 100, 30, 10)
 			if stuckFlug == 1:
-				Motor.motor(20, 20, 1)
-				Motor.motor(-20, -20, 1)
-				Motor.motor(20, -20, 1)
-				Motor.motor(-20, 20, 1)
+				Motor.motor(-50, 50, 1)
+				Motor.motor(50, -50, 1)
+				Motor.motor(-50, 50, 1)
+				Motor.motor(50, -50, 1)
 				Motor.motor(0, 0, 2)
 			#-----------------Parachute Avoidance---------------------#
 			print("START: Parachute avoidance")
