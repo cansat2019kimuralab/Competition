@@ -57,7 +57,7 @@ t_sleep = 10				#time for sleep phase
 t_release = 10				#time for release(loopx)
 t_land = 300				#time for land(loopy)
 t_melt = 5					#time for melting
-t_transmit = 30			#time for transmit limit
+t_transmit = 30				#time for transmit limit
 t_sleep_start = 0			#time for sleep origin
 t_release_start = 0			#time for release origin
 t_land_start = 0			#time for land origin
@@ -70,6 +70,7 @@ t_stuckDete_start = 0
 timeout_calibration = 180	#time for calibration timeout
 timeout_parachute = 60
 timeout_takePhoto = 10		#time for taking photo timeout
+timeout_sendPhoto = 120		#time for sending photo timeout
 timeout_goalDete = 180
 timeout_stuck = 60
 
@@ -106,13 +107,13 @@ S_thd = 180			#Saturation threshold
 bomb = 0			#use for goalDete flug
 
 # --- variable for Transmit --- #
-mode=1				#valiable for transmit mode 
-readmode=0			#valiable for image read mode
-count=0				#valiable for transmit count
-amari=0
+mode = 1			#valiable for transmit mode 
+readmode = 0		#valiable for image read mode
+count = 0			#valiable for transmit count
+amari = 0
 
 # --- variable for Running --- #
-ellipseScale = [0.0, 0.0, 0.0, 0.0] #Convert coefficient Ellipse to Circle
+ellipseScale = [-59.798777718173305, 115.70600117716003, 0.7274397548583861, 0.8589971006669609] #Convert coefficient Ellipse to Circle
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
@@ -144,6 +145,7 @@ goalDetectionLog =	"/home/pi/log/goalDetectionLog.txt"
 captureLog = 		"/home/pi/log/captureLog.txt"
 missionLog = 		"/home/pi/log/missionLog.txt"
 calibrationLog = 	"/home/pi/log/calibrationLog"
+sendPhotoLog = 		"/home/pi/log/sendPhotoLog.txt"
 stuckLog = 			"/home/pi/log/stuckLog.txt"
 errorLog = 			"/home/pi/log/erroLog.txt"
 
@@ -176,19 +178,16 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	#phaseChk = 8
+	phaseChk = 7
 
-def transmitphoto():
+def transmitPhoto():
 	global t_start
-	global t_transmit
-	global t_transmit_start
-	global mode
-	t_transmit_start = time.time()
 	photoName = Capture.Capture(photopath)
 	Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 	print("Send Photo")
 	sendPhoto.sendPhoto(photoName)
-	print("Send Photo Finishde")
+	print("Send Photo Finished")
+	Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
 
 def close():
 	GPS.closeGPS()
@@ -233,7 +232,7 @@ if __name__ == "__main__":
 			Other.saveLog(phaseLog, "3", "Release Phase Started", time.time() - t_start)
 			t_release_start = time.time()
 			print("Releasing Phase Started  {0}".format(time.time() - t_start))
-			#IM920.Send("P3S")
+			IM920.Send("P3S")
 
 			# --- Release Judgement, "while" is for timeout --- #
 			while (time.time() - t_release_start <= t_release):
@@ -247,6 +246,7 @@ if __name__ == "__main__":
 				else:
 					print("Rover is in rocket")
 					IM920.Send("P3D")
+
 				# --- Save Log and Take Photo --- #
 				gpsData = GPS.readGPS()
 				Other.saveLog(releaseLog, time.time() - t_start, acount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
@@ -311,7 +311,8 @@ if __name__ == "__main__":
 
 			print("ParaAvoidance Phase Started")
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Start")
-			#-----------------Parachute Judge---------------------#
+
+			# --- Parachute Judge --- #
 			print("START: Judge covered by Parachute")
 			t_paraDete_start = time.time()
 			while time.time() - t_paraDete_start < timeout_parachute:
@@ -319,7 +320,8 @@ if __name__ == "__main__":
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), paraLuxflug, paraLux, LuxThd)
 				if paraLuxflug == 1:
 					break
-			#-----------------stackDete---------------------#
+			'''
+			# --- StuckDetection --- #
 			Motor.motor(15, 15, 0.9)
 			Motor.motor(0, 0, 0.9)
 			stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, PstuckCount, stuckCountThd)
@@ -329,7 +331,15 @@ if __name__ == "__main__":
 				Motor.motor(-70, 70, 1)
 				Motor.motor(70, -70, 1)
 				Motor.motor(0, 0, 1)
-			#-----------------Parachute Avoidance---------------------#
+			'''
+
+			Motor.motor(-50, 50, 0.4)
+			Motor.motor(50, -50, 0.8)
+			Motor.motor(-50, 50, 0.8)
+			Motor.motor(50, -50, 0.4)
+			Motor.motor(0, 0, 1)
+
+			# --- Parachute Avoidance --- #
 			print("START: Parachute avoidance")
 			for i in range(2):	#Avoid Parachute two times
 				Motor.motor(15, 15, 0.9)
@@ -357,14 +367,11 @@ if __name__ == "__main__":
 			print("Running Phase Started")
 			IM920.Send("P7S")
 
-			# --- Transmit Image --- #
-			#transmitphoto()
-
 			# --- Read GPS Data --- #
 			print("Read GPS Data")
-			while(not RunningGPS.checkGPSstatus(gpsData)):
-				gpsData = GPS.readGPS()
-				time.sleep(1)
+			#while(not RunningGPS.checkGPSstatus(gpsData)):
+			#	gpsData = GPS.readGPS()
+			#	time.sleep(1)
 			stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
 
 			t_calib_origin = time.time() - timeout_calibration - 20
@@ -378,20 +385,29 @@ if __name__ == "__main__":
 
 				# --- Calibration --- #
 				if(time.time() - t_calib_origin > timeout_calibration):
-					#Every [timeout_calibratoin] second,  Calibrate
+					IM920.Send("P7D")
 					Motor.motor(0, 0, 2)
+
+					# --- Send Photo --- #
+					#transmitPhoto()
+
+					#Every [timeout_calibratoin] second,  Calibrate
 					print("Calibration")
 					fileCal = Other.fileName(calibrationLog, "txt")
-					Motor.motor(50, 10, 2)
-					Calibration.readCalData(fileCal)
-					Motor.motor(0, 0, 1)
-					ellipseScale = Calibration.Calibration(fileCal)
-					Other.saveLog(fileCal, ellipseScale)
-					Other.saveLog(fileCal, time.time() - t_start)
+					Motor.motor(60, 10, 2)
+					stuckFlug = stuckDetection.BMXstuckDetection(mp_max, 40, 50, 20, 1)
+					print(stuckFlug)
+					if stuckFlug == 0:
+						Calibration.readCalData(fileCal)
+						ellipseScale = Calibration.Calibration(fileCal)
+						Other.saveLog(fileCal, ellipseScale)
+						Other.saveLog(fileCal, time.time() - t_start)
+					Motor.motor(0, 0, 5)
 					t_calib_origin = time.time()
 
 				# --- Taking Photo --- #
 				if(time.time() - t_takePhoto_start > timeout_takePhoto):
+					IM920.Send("P7D")
 					Motor.motor(0, 0, 2)
 					Motor.motor(30, 30, 0.5)
 					Motor.motor(0, 0, 0.5)
@@ -431,9 +447,9 @@ if __name__ == "__main__":
 			Other.saveLog(phaseLog, "8", "GoalDetection Phase Started", time.time() - t_start)
 			print("Goal Detection Phase Started")
 			IM920.Send("P8S")
-			
+
 			# --- Transmit Image --- #
-			#transmitphoto()
+			#transmitPhoto()
 
 			t_goalDete_start = time.time()
 			t_stuckDete_start = time.time()
@@ -444,7 +460,7 @@ if __name__ == "__main__":
 				goalBufFlug = goalFlug
 				Motor.motor(15,15,0.9)
 				Motor.motor(0, 0, 1.0)
-				#-----------------stackDete---------------------#
+				# --- Stuck Detection --- #
 				if time.time() - t_stuckDete_start > timeout_stuck:
 					stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
 					if stuckFlug == 1:
@@ -455,53 +471,57 @@ if __name__ == "__main__":
 						Motor.motor(0, 0, 2)
 						goalcount = 0
 					t_stuckDete_start = time.time()
-				#-----------------get information-----------------#
+
+				# --- get information --- #
 				goalFlug, goalArea, goalGAP, photoName = goal_detection.GoalDetection(photopath, H_min, H_max, S_thd, goalthd)
 				print("flug", goalFlug, "area", goalArea, "GAP", goalGAP)
 				#print("bomb",bomb)
-				#--------------------goal---------------------#
+
+				# --- goal --- #
 				if goalFlug == 0:
 					Motor.motor(60, 60 + mp_adj, 0.4)
-					Motor.motor(0, 0, 0.4)				
-				#------------------not detect----------------------#
+					Motor.motor(0, 0, 0.4)
+
+				# --- not detect --- #
 				elif goalFlug == -1:
 					if bomb == 1:
 						Motor.motor(mp_max, mp_min + mp_adj, 0.7)
-						Motor.motor(0, 0, 0.8)				
+						Motor.motor(0, 0, 0.8)
 						bomb = 1
 					else:
 						Motor.motor(mp_min, mp_max + mp_adj, 0.7)	
-						Motor.motor(0, 0, 0.8)				
+						Motor.motor(0, 0, 0.8)
 						bomb = 0
-				#---------------detect but no goal-------------#
+
+				# --- detect but no goal --- #
 				else:
 					#if goalcount == 0:
-					#-----------------target left------------------#
+					# --- target left --- #
 					if goalArea < 3000 and goalArea > 0 and goalGAP < 0:
 						MP = goal_detection.curvingSwitch(goalGAP, adj_add)
 						Motor.motor(mp_max - MP, mp_max + mp_adj, 0.8)
-						Motor.motor(0, 0, 0.8)				
+						Motor.motor(0, 0, 0.8)
 						bomb = 1
 						#goalcount = 1
-					#----------------------target right------------------------#
+					# --- target right --- #
 					elif goalArea < 3000 and goalArea > 0 and goalGAP >= 0:
 						MP = goal_detection.curvingSwitch(goalGAP, adj_add)
 						Motor.motor(mp_max, mp_max - MP + mp_adj, 0.8)
-						Motor.motor(0, 0, 0.8)				
+						Motor.motor(0, 0, 0.8)
 						bomb = 0
 						#goalcount = 1
-					else:	
-						#-----------------near the target------------------#
+					else:
+						# --- near the target --- #
 						if goalGAP < 0:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
 							Motor.motor(mp_min, mp_max + MP + mp_adj, 0.5)
-							Motor.motor(0, 0, 0.5)				
+							Motor.motor(0, 0, 0.5)
 							bomb = 1
 						#goalcount = 1
 						elif goalGAP >= 0:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
 							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.5)
-							Motor.motor(0, 0, 0.5)				
+							Motor.motor(0, 0, 0.5)
 							bomb = 0
 						#goalcount = 1
 						else:
@@ -512,21 +532,24 @@ if __name__ == "__main__":
 			print("Goal Detection Phase Finished")
 			IM920.Send("P8F")
 
+		# ------------------- Sending Photo Phase ------------------- #
+		if(phaseChk <= 9):
+			Other.saveLog(phaseLog, "9", "Sending Photo Phase Started", time.time() - t_start)
+			print("Sending Photo Phase Started")
+			IM920.Send("P9S")
+			for i in range(3):
+				IM920.Send("P9D")
+				transmitPhoto()
+				time.sleep(1)
+				IM920.Send("P9D")
+			print("Sending Photo Phase Finished")
+			IM920.Send("P9F")
+
 		# ------------------- Program Finish ------------------- #
 		print("Program Finished")
 		IM920.Send("P10")
 		Other.saveLog(phaseLog, "10", "Program Finished", time.time() - t_start)
-		
-		# --- Transmit Image --- #
-		transmitphoto()
-		time.sleep(1)
-		
-		# --- Transmit Image --- #
-		transmitphoto()
-		time.sleep(1)
-		
-		# --- Transmit Image --- #
-		transmitphoto()
+
 		close()
 	except KeyboardInterrupt:
 		close()
