@@ -24,7 +24,7 @@ receivePhotoArrayLog = ""
 array = [[[0]*3]*80]*60
 array = np.zeros_like(array)
 I = list(range(5))
-receivePhotFlug = 0
+receivePhotoFlug = 0
 receivePhotoPath = "receivePhoto"
 restorePhotoPath = "restorePhoto"
 receivePhotoName = ""
@@ -62,7 +62,7 @@ def Reception(mybaudrate =19200):
             cngtext += chr(int(x,16))
     except Exception:
         cngtext = ""
-        #print("NO DATA")
+        print("NO DATA")
     return text, cngtext
 
 def saveLog(path, *data):
@@ -91,9 +91,11 @@ if __name__ == "__main__":
         while 1:
             receiveData, receiveDataDec = Reception(baudrate)
             if(receiveDataDec == ""):
+                #print("No Data")
                 continue
             elif(65 <= ord(receiveDataDec[0]) <= 90):
                 # --- Large Alphabet --- #
+                print(receiveDataDec)
                 saveLog(receptionLog, datetime.datetime.now(), receiveData)
                 saveLog(receptionDecrptionLog, datetime.datetime.now(), receiveDataDec)
                 if(receivePhotoFlug == 1):
@@ -122,7 +124,7 @@ if __name__ == "__main__":
                                     array[i][j][k] = int(pixel / num)                    
                     restorePhotoName = fileName(restorePhotoPath, 'jpg')
                     cv2.imwrite(restorePhotoName, array)
-                    print(count)
+                    #print(count)
                     array = np.zeros_like(array)
             elif(48 <= ord(receiveDataDec[0]) <= 57):
                 # --- Number --- #

@@ -53,9 +53,9 @@ phaseChk = 0	#variable for phase Check
 
 # --- variable of time setting --- #
 t_start  = 0.0				#time when program started
-t_sleep = 10				#time for sleep phase
-t_release = 10				#time for release(loopx)
-t_land = 300				#time for land(loopy)
+t_sleep = 30				#time for sleep phase
+t_release = 210				#time for release(loopx)
+t_land = 210				#time for land(loopy)
 t_melt = 5					#time for melting
 t_transmit = 30				#time for transmit limit
 t_sleep_start = 0			#time for sleep origin
@@ -72,7 +72,7 @@ timeout_parachute = 60
 timeout_takePhoto = 10		#time for taking photo timeout
 timeout_sendPhoto = 120		#time for sending photo timeout
 timeout_goalDete = 180
-timeout_stuck = 60
+timeout_stuck = 100
 
 # --- variable for storing sensor data --- #
 gpsData = [0.0,0.0,0.0,0.0,0.0]						#variable to store GPS data
@@ -113,11 +113,11 @@ count = 0			#valiable for transmit count
 amari = 0
 
 # --- variable for Running --- #
-ellipseScale = [-59.798777718173305, 115.70600117716003, 0.7274397548583861, 0.8589971006669609] #Convert coefficient Ellipse to Circle
+ellipseScale = [-99.79881015576746, 171.782066653816, 1.586018339640338, 0.9521503173796134] #Convert coefficient Ellipse to Circle
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon = 40.142733, 139.987463	#Coordinates of That time
+gLat, gLon = 40.142478, 139.98735	#Coordinates of That time
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
@@ -178,7 +178,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 7
+	#phaseChk = 5
 
 def transmitPhoto():
 	global t_start
@@ -236,7 +236,7 @@ if __name__ == "__main__":
 
 			# --- Release Judgement, "while" is for timeout --- #
 			while (time.time() - t_release_start <= t_release):
-				#luxjudge,lcount = Release.luxjudge()
+				luxjudge,lcount = Release.luxjudge()
 				pressjudge,acount = Release.pressjudge()
 				t1 = time.time()
 				if luxjudge == 1 or pressjudge == 1:
@@ -249,7 +249,7 @@ if __name__ == "__main__":
 
 				# --- Save Log and Take Photo --- #
 				gpsData = GPS.readGPS()
-				Other.saveLog(releaseLog, time.time() - t_start, acount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
+				Other.saveLog(releaseLog, time.time() - t_start, acount, lcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
 				photoName = Capture.Capture(photopath)
 				Other.saveLog(captureLog, time.time() - t_start, gpsData, BME280.bme280_read(), photoName)
 
@@ -333,28 +333,35 @@ if __name__ == "__main__":
 				Motor.motor(0, 0, 1)
 			'''
 
-			Motor.motor(-50, 50, 0.4)
-			Motor.motor(50, -50, 0.8)
-			Motor.motor(-50, 50, 0.8)
-			Motor.motor(50, -50, 0.4)
+			Motor.motor(60, 60, 0.4)
+			Motor.motor(0, 0, 0.4)
+			Motor.motor(-60, -60, 0.4)
+			Motor.motor(0, 0, 0.4)
+			Motor.motor(60, 60, 0.4)
+			Motor.motor(0, 0, 0.4)
+			Motor.motor(-60, -60, 0.4)
 			Motor.motor(0, 0, 1)
 
 			# --- Parachute Avoidance --- #
 			print("START: Parachute avoidance")
-			for i in range(2):	#Avoid Parachute two times
+			for i in range(4):	#Avoid Parachute two times
 				Motor.motor(15, 15, 0.9)
 				Motor.motor(0, 0, 0.9)
 				paraExsist, paraArea, photoName = ParaDetection.ParaDetection(photopath, H_min, H_max, S_thd)
 
 				if paraExsist == 1:
 					Motor.motor(-mp_max, -mp_max, 5)
-					Motor.motor(0, 0, 2)
+					Motor.motor(0, 0, 1)
+					Motor.motor(mp_max, mp_max, 0.5)
+					Motor.motor(0 ,0, 1)
 					Motor.motor(mp_max, mp_min, 1.0)
-					Motor.motor(0, 0, 2)
+					Motor.motor(0, 0, 1)
 
 				if paraExsist == 0:
 					Motor.motor(mp_max, mp_max, 5)
-					Motor.motor(0 ,0, 2)
+					Motor.motor(0 ,0, 1)
+					Motor.motor(-mp_max, -mp_max, 0.5)
+					Motor.motor(0 ,0, 1)
 
 				Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), photoName, paraExsist, paraArea)
@@ -369,14 +376,14 @@ if __name__ == "__main__":
 
 			# --- Read GPS Data --- #
 			print("Read GPS Data")
-			#while(not RunningGPS.checkGPSstatus(gpsData)):
-			#	gpsData = GPS.readGPS()
-			#	time.sleep(1)
+			while(not RunningGPS.checkGPSstatus(gpsData)):
+				gpsData = GPS.readGPS()
+				time.sleep(1)
 			stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
 
 			t_calib_origin = time.time() - timeout_calibration - 20
 			t_takePhoto_start = time.time()
-			while(disGoal >= 5):
+			while(disGoal >= 3):
 				# --- Get GPS Data --- #
 				if(RunningGPS.checkGPSstatus(gpsData)):
 					nLat = gpsData[1]
@@ -389,7 +396,7 @@ if __name__ == "__main__":
 					Motor.motor(0, 0, 2)
 
 					# --- Send Photo --- #
-					#transmitPhoto()
+					transmitPhoto()
 
 					#Every [timeout_calibratoin] second,  Calibrate
 					print("Calibration")
@@ -449,7 +456,7 @@ if __name__ == "__main__":
 			IM920.Send("P8S")
 
 			# --- Transmit Image --- #
-			#transmitPhoto()
+			transmitPhoto()
 
 			t_goalDete_start = time.time()
 			t_stuckDete_start = time.time()
@@ -486,11 +493,11 @@ if __name__ == "__main__":
 				elif goalFlug == -1:
 					if bomb == 1:
 						Motor.motor(mp_max, mp_min + mp_adj, 0.7)
-						Motor.motor(0, 0, 0.8)
+						Motor.motor(0, 0, 0.7)
 						bomb = 1
 					else:
 						Motor.motor(mp_min, mp_max + mp_adj, 0.7)	
-						Motor.motor(0, 0, 0.8)
+						Motor.motor(0, 0, 0.7)
 						bomb = 0
 
 				# --- detect but no goal --- #
