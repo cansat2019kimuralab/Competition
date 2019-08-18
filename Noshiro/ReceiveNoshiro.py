@@ -38,7 +38,7 @@ def setSerial(mybaudrate=19200):
         baudrate=mybaudrate,
         bytesize=serial.EIGHTBITS,
         parity=serial.PARITY_NONE,
-        timeout=3,
+        timeout=5,
         xonxoff=False,
         rtscts=False,
         writeTimeout=None,
@@ -62,7 +62,7 @@ def Reception(mybaudrate =19200):
             cngtext += chr(int(x,16))
     except Exception:
         cngtext = ""
-        #print("NO DATA")
+        #print("No Data")
     return text, cngtext
 
 def saveLog(path, *data):
@@ -91,9 +91,11 @@ if __name__ == "__main__":
         while 1:
             receiveData, receiveDataDec = Reception(baudrate)
             if(receiveDataDec == ""):
+                print("No Data")
                 continue
             elif(65 <= ord(receiveDataDec[0]) <= 90):
                 # --- Large Alphabet --- #
+                print(receiveDataDec)
                 saveLog(receptionLog, datetime.datetime.now(), receiveData)
                 saveLog(receptionDecrptionLog, datetime.datetime.now(), receiveDataDec)
                 if(receivePhotoFlug == 1):
