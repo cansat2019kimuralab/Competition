@@ -15,7 +15,7 @@ from PIL import Image
 from matplotlib import pyplot as plt
 
 baudrate = 57600
-comNum = 'COM37'
+comNum = 'COM6'
 com = 0
 receptionLog = r"communicationLog.txt"
 receptionDecrptionLog = r"communicationDecryptionLog.txt"
@@ -62,7 +62,7 @@ def Reception(mybaudrate =19200):
             cngtext += chr(int(x,16))
     except Exception:
         cngtext = ""
-        #print("No Data")
+        print("No Data")
     return text, cngtext
 
 def saveLog(path, *data):
@@ -121,10 +121,12 @@ if __name__ == "__main__":
                                     if j != 79:
                                         pixel = pixel + array[i][j+1][k]
                                         num = num + 1
-                                    array[i][j][k] = int(pixel / num)                    
+                                    array[i][j][k] = int(pixel / num) 
+                                    count = count + 1                   
                     restorePhotoName = fileName(restorePhotoPath, 'jpg')
                     cv2.imwrite(restorePhotoName, array)
                     print(count)
+                    count = 0
                     array = np.zeros_like(array)
             elif(48 <= ord(receiveDataDec[0]) <= 57):
                 # --- Number --- #
