@@ -100,7 +100,6 @@ goalBufFlug = -1	#variable for GoalDetection buf
 goalArea = 0		#variable for goal area
 goalGAP = -1		#variable for goal gap
 goalthd = 7000		#variable for goal area thd
-goalcount = 0		#variable for Noshiro
 H_min = 220			#Hue minimam
 H_max = 5			#Hue maximam
 S_thd = 180			#Saturation threshold
@@ -465,8 +464,6 @@ if __name__ == "__main__":
 					break
 				gpsdata = GPS.readGPS()
 				goalBufFlug = goalFlug
-				Motor.motor(15,15,0.9)
-				Motor.motor(0, 0, 1.0)
 				# --- Stuck Detection --- #
 				if time.time() - t_stuckDete_start > timeout_stuck:
 					stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
@@ -476,10 +473,12 @@ if __name__ == "__main__":
 						Motor.motor(70, 70, 3)
 						Motor.motor(70, -70, 3)
 						Motor.motor(0, 0, 2)
-						goalcount = 0
+						Motor.motor_stop()
 					t_stuckDete_start = time.time()
 
 				# --- get information --- #
+				Motor.motor(15,15,0.9)
+				Motor.motor(0, 0, 1.0)
 				goalFlug, goalArea, goalGAP, photoName = goal_detection.GoalDetection(photopath, H_min, H_max, S_thd, goalthd)
 				print("flug", goalFlug, "area", goalArea, "GAP", goalGAP)
 				#print("bomb",bomb)
@@ -488,49 +487,50 @@ if __name__ == "__main__":
 				if goalFlug == 0:
 					Motor.motor(60, 60 + mp_adj, 0.4)
 					Motor.motor(0, 0, 0.4)
-
+					Motor.motor_stop()
 				# --- not detect --- #
 				elif goalFlug == -1:
 					if bomb == 1:
 						Motor.motor(mp_max, mp_min + mp_adj, 0.7)
 						Motor.motor(0, 0, 0.7)
+						Motor.motor_stop()
 						bomb = 1
 					else:
 						Motor.motor(mp_min, mp_max + mp_adj, 0.7)	
 						Motor.motor(0, 0, 0.7)
+						Motor.motor_stop()
 						bomb = 0
 
 				# --- detect but no goal --- #
 				else:
-					#if goalcount == 0:
 					# --- target left --- #
 					if goalArea < 3000 and goalArea > 0 and goalGAP < 0:
 						MP = goal_detection.curvingSwitch(goalGAP, adj_add)
 						Motor.motor(mp_max - MP, mp_max + mp_adj, 0.8)
 						Motor.motor(0, 0, 0.8)
+						Motor.motor_stop()
 						bomb = 1
-						#goalcount = 1
 					# --- target right --- #
 					elif goalArea < 3000 and goalArea > 0 and goalGAP >= 0:
 						MP = goal_detection.curvingSwitch(goalGAP, adj_add)
 						Motor.motor(mp_max, mp_max - MP + mp_adj, 0.8)
 						Motor.motor(0, 0, 0.8)
+						Motor.motor_stop()
 						bomb = 0
-						#goalcount = 1
 					else:
 						# --- near the target --- #
 						if goalGAP < 0:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
 							Motor.motor(mp_min, mp_max + MP + mp_adj, 0.5)
 							Motor.motor(0, 0, 0.5)
+							Motor.motor_stop()
 							bomb = 1
-						#goalcount = 1
 						elif goalGAP >= 0:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
 							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.5)
 							Motor.motor(0, 0, 0.5)
+							Motor.motor_stop()
 							bomb = 0
-						#goalcount = 1
 						else:
 							print("error")
 				Other.saveLog(goalDetectionLog, time.time() - t_start, gpsData, goalFlug, goalArea, goalGAP, photoName)
