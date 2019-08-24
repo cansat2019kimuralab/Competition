@@ -282,6 +282,15 @@ if __name__ == "__main__":
 				#elif pressjudge == 1 : #or gpsjudge == 1:
 				#print("Landing JudgementNow")
 
+				elif pressjudge == -1: #when bme is dead
+					magnetlandjudge,Mcount = Land.bmxjudge()
+					if magnetlandjudge == 1:
+						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by BMX", pressjudge, gmagnetlandjudge)
+						print("Rover has emergency landed")
+						break
+					elif magnetlandjusge == 0:
+						print("emergency descend")
+
 				# --- Save Log and Take Photo--- #
 				for i in range(3):
 					Other.saveLog(landingLog ,time.time() - t_start, Pcount, gacount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
@@ -290,7 +299,7 @@ if __name__ == "__main__":
 
 				IM920.Send("P4D")
 			else:
-				Other.saveLog(landingLog, time.time() - t_start, "Landing Judged by Timeout")
+				Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Timeout")
 				print("Landing Timeout")
 			IM920.Send("P4F")
 
