@@ -291,11 +291,11 @@ if __name__ == "__main__":
 						print("Rover has emergency landed")
 						break
 					elif magnetlandjusge == 0:
-						print("emergency descend")
+						print("emergency descend now")
 
 				# --- Save Log and Take Photo--- #
 				for i in range(3):
-					Other.saveLog(landingLog ,time.time() - t_start, Pcount, gacount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
+					Other.saveLog(landingLog ,time.time() - t_start, Pcount, gacount, Mcount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
 					photoName = Capture.Capture(photopath)
 					Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 
