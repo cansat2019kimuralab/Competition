@@ -186,7 +186,7 @@ def transmitPhoto():
 	photoName = Capture.Capture(photopath)
 	Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 	print("Send Photo")
-	sendPhoto.sendPhoto(photoName)
+	#sendPhoto.sendPhoto(photoName)
 	print("Send Photo Finished")
 	Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
 
@@ -289,10 +289,10 @@ if __name__ == "__main__":
 					magnetlandjudge,Mcount = Land.bmxjudge()
 					if magnetlandjudge == 1:
 						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by BMX", pressjudge, gmagnetlandjudge)
-						print("Rover has emergency landed")
+						print("Rover has Emergency landed")
 						break
 					elif magnetlandjusge == 0:
-						print("emergency descend now")
+						print("emergency Descend now")
 
 				# --- Save Log and Take Photo--- #
 				for i in range(3):
@@ -414,11 +414,11 @@ if __name__ == "__main__":
 
 				# --- Calibration --- #
 				if(time.time() - t_calib_origin > timeout_calibration):
-					IM920.Send("P7D")
+					IM920.Send("P7C")
 					Motor.motor(0, 0, 2)
 
 					# --- Send Photo --- #
-					#transmitPhoto()
+					transmitPhoto()
 
 					#Every [timeout_calibratoin] second,  Calibrate
 					print("Calibration")
@@ -436,7 +436,7 @@ if __name__ == "__main__":
 
 				# --- Taking Photo --- #
 				if(time.time() - t_takePhoto_start > timeout_takePhoto):
-					IM920.Send("P7D")
+					IM920.Send("P7T")
 					Motor.motor(0, 0, 2)
 					Motor.motor(30, 30, 0.5)
 					Motor.motor(0, 0, 0.5)
@@ -478,7 +478,7 @@ if __name__ == "__main__":
 			IM920.Send("P8S")
 
 			# --- Transmit Image --- #
-			#transmitPhoto()
+			transmitPhoto()
 
 			t_goalDete_start = time.time()
 			t_stuckDete_start = time.time()
