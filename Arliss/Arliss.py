@@ -57,7 +57,7 @@ phaseChk = 0	#variable for phase Check
 # --- variable of time setting --- #
 t_start  = 0.0				#time when program started
 t_sleep = 30				#time for sleep phase
-t_release = 210				#time for release(loopx)
+t_release = 120				#time for release(loopx)
 t_land = 210				#time for land(loopy)
 t_melt = 5					#time for melting
 t_transmit = 30				#time for transmit limit
@@ -74,7 +74,7 @@ timeout_calibration = 180	#time for calibration timeout
 timeout_parachute = 60
 timeout_takePhoto = 10		#time for taking photo timeout
 timeout_sendPhoto = 120		#time for sending photo timeout
-timeout_goalDete = 180
+timeout_goalDete = 300
 timeout_stuck = 100
 
 # --- variable for storing sensor data --- #
@@ -87,9 +87,11 @@ lcount = 0			#lux count for release
 acount = 0			#press count for release
 Pcount = 0			#press count for land
 GAcount = 0
-gacount=0			#GPSheight count for land
+gacount = 0			#GPSheight count for land
+Mcount = 0			#Magnet count
 luxjudge = 0		#for release
 pressjudge = 0		#for release and land
+magnetlandjudge=0   #for emergency landjudge
 gpsjudge = 0		#for land
 stuckFlug = 0
 stuckThd = 100
@@ -102,11 +104,10 @@ goalFlug = -1		#variable for GoalDetection		-1:Not Detect, 0:Goal, 1:Detect
 goalBufFlug = -1	#variable for GoalDetection buf
 goalArea = 0		#variable for goal area
 goalGAP = -1		#variable for goal gap
-goalthd = 7000		#variable for goal area thd
-goalcount = 0		#variable for Noshiro
-H_min = 220			#Hue minimam
-H_max = 5			#Hue maximam
-S_thd = 180			#Saturation threshold
+goalthd = 10000		#variable for goal area thd
+H_min = 200			#Hue minimam
+H_max = 10			#Hue maximam
+S_thd = 130			#Saturation threshold
 bomb = 0			#use for goalDete flug
 
 # --- variable for Transmit --- #
@@ -120,19 +121,19 @@ ellipseScale = [-99.79881015576746, 171.782066653816, 1.586018339640338, 0.95215
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon = 40.142478, 139.98735	#Coordinates of That time
+gLat, gLon = 35.924008, 139.912257	#Coordinates of That time
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
 rAng = 0.0							#Median of relAng [deg]
 mP, mPL, mPR, mPS = 0, 0, 0, 0		#Motor Power
-kp = 1.0							#Proportional Gain
+kp = 0.7							#Proportional Gain
 stuckMode = [0, 0]					#Variable for Stuck
 
 # --- variable for Goal Detection --- #
-maxMP = 70							#Maximum Motor Power
+maxMP = 50							#Maximum Motor Power
 mp_min = 20							#motor power for Low level
-mp_max = 70							#motor power fot High level
+mp_max = 60							#motor power fot High level
 mp_adj = -3							#adjust motor power
 adj_add = 8
 
@@ -182,7 +183,7 @@ def setup():
 		phaseChk = 0
 	#if it is debug
 	phaseChk = 7
-
+	
 def transmitPhoto():
 	global t_start
 	photoName = Capture.Capture(photopath)
@@ -246,7 +247,8 @@ if __name__ == "__main__":
 			Other.saveLog(phaseLog, "2", "Sleep Phase Started", time.time() - t_start)
 			print("Sleep Phase Started  {0}".format(time.time() - t_start))
 			IM920.Send("P2S")
-			#pi.write(22, 0)			#IM920 Turn Off
+			pi.write(22, 0)			#IM920 Turn Off
+			print("IM920 Turn Off")
 			t_sleep_start = time.time()
 
 			# --- Sleep --- #
@@ -255,20 +257,21 @@ if __name__ == "__main__":
 				photoName = Capture.Capture(photopath)
 				Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 				time.sleep(1)
-				IM920.Send("P2D")
-			IM920.Send("P2F")
+				#IM920.Send("P2D")
+			#IM920.Send("P2F")
 
 		# ------------------- Release Phase ------------------- #
 		if(phaseChk <= 3):
 			Other.saveLog(phaseLog, "3", "Release Phase Started", time.time() - t_start)
 			t_release_start = time.time()
 			print("Releasing Phase Started  {0}".format(time.time() - t_start))
-			IM920.Send("P3S")
+			#IM920.Send("P3S")
 
 			# --- Release Judgement, "while" is for timeout --- #
 			while (time.time() - t_release_start <= t_release):
 				luxjudge,lcount = Release.luxjudge()
 				pressjudge,acount = Release.pressjudge()
+				print(lcount, acount)
 				t1 = time.time()
 				if luxjudge == 1 or pressjudge == 1:
 					Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Sensor", luxjudge, pressjudge)
@@ -276,7 +279,7 @@ if __name__ == "__main__":
 					break
 				else:
 					print("Rover is in rocket")
-					IM920.Send("P3D")
+					#IM920.Send("P3D")
 
 				# --- Save Log and Take Photo --- #
 				gpsData = GPS.readGPS()
@@ -284,7 +287,7 @@ if __name__ == "__main__":
 				photoName = Capture.Capture(photopath)
 				Other.saveLog(captureLog, time.time() - t_start, gpsData, BME280.bme280_read(), photoName)
 
-				IM920.Send("P3D")
+				#IM920.Send("P3D")
 			else:
 				Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Timeout")
 				print("Release Timeout")
@@ -313,15 +316,24 @@ if __name__ == "__main__":
 				#elif pressjudge == 1 : #or gpsjudge == 1:
 				#print("Landing JudgementNow")
 
+				elif pressjudge == -1: #when bme is dead
+					magnetlandjudge,Mcount = Land.bmxjudge()
+					if magnetlandjudge == 1:
+						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by BMX", pressjudge, gmagnetlandjudge)
+						print("Rover has Emergency landed")
+						break
+					elif magnetlandjusge == 0:
+						print("emergency Descend now")
+
 				# --- Save Log and Take Photo--- #
 				for i in range(3):
-					Other.saveLog(landingLog ,time.time() - t_start, Pcount, gacount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
+					Other.saveLog(landingLog ,time.time() - t_start, Pcount, gacount, Mcount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
 					photoName = Capture.Capture(photopath)
 					Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 
 				IM920.Send("P4D")
 			else:
-				Other.saveLog(landingLog, time.time() - t_start, "Landing Judged by Timeout")
+				Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Timeout")
 				print("Landing Timeout")
 			IM920.Send("P4F")
 
@@ -363,19 +375,23 @@ if __name__ == "__main__":
 				Motor.motor(70, -70, 1)
 				Motor.motor(0, 0, 1)
 			'''
-
-			Motor.motor(60, 60, 0.4)
-			Motor.motor(0, 0, 0.4)
-			Motor.motor(-60, -60, 0.4)
-			Motor.motor(0, 0, 0.4)
-			Motor.motor(60, 60, 0.4)
-			Motor.motor(0, 0, 0.4)
-			Motor.motor(-60, -60, 0.4)
-			Motor.motor(0, 0, 1)
+			Motor.motor(15,15, 0.9)
+			Motor.motor(0, 0, 0.9)
+			t_paraDete_start = time.time()
+			while BMX055.bmx055_read()[2] < 5:
+				if time.time() - t_paraDete_start > timeout_parachute:
+					break
+				Motor.motor(15, 15, 0.9)
+				Motor.motor(0, 0, 0.9)
+				Motor.motor(80, 80, 0.2, 1)
+				Motor.motor(0, 0, 0.8)
+				Motor.motor(-80, -80, 0.2, 1)
+				Motor.motor(0, 0, 0.8)
 
 			# --- Parachute Avoidance --- #
 			print("START: Parachute avoidance")
-			for i in range(4):	#Avoid Parachute two times
+			for i in range(2):	#Avoid Parachute two times
+				Motor.motor(0, 0, 2)
 				Motor.motor(15, 15, 0.9)
 				Motor.motor(0, 0, 0.9)
 				paraExsist, paraArea, photoName = ParaDetection.ParaDetection(photopath, H_min, H_max, S_thd)
@@ -389,6 +405,12 @@ if __name__ == "__main__":
 					Motor.motor(0, 0, 1)
 
 				if paraExsist == 0:
+					Motor.motor(mp_max, mp_max, 5)
+					Motor.motor(0 ,0, 1)
+					Motor.motor(-mp_max, -mp_max, 0.5)
+					Motor.motor(0 ,0, 1)
+
+				if paraExsist == -1:
 					Motor.motor(mp_max, mp_max, 5)
 					Motor.motor(0 ,0, 1)
 					Motor.motor(-mp_max, -mp_max, 0.5)
@@ -423,7 +445,7 @@ if __name__ == "__main__":
 
 				# --- Calibration --- #
 				if(time.time() - t_calib_origin > timeout_calibration):
-					IM920.Send("P7D")
+					IM920.Send("P7C")
 					Motor.motor(0, 0, 2)
 
 					# --- Send Photo --- #
@@ -436,7 +458,7 @@ if __name__ == "__main__":
 
 				# --- Taking Photo --- #
 				if(time.time() - t_takePhoto_start > timeout_takePhoto):
-					IM920.Send("P7D")
+					IM920.Send("P7T")
 					Motor.motor(0, 0, 2)
 					Motor.motor(30, 30, 0.5)
 					Motor.motor(0, 0, 0.5)
@@ -487,74 +509,77 @@ if __name__ == "__main__":
 					break
 				gpsdata = GPS.readGPS()
 				goalBufFlug = goalFlug
-				Motor.motor(15,15,0.9)
-				Motor.motor(0, 0, 1.0)
+				
 				# --- Stuck Detection --- #
 				if time.time() - t_stuckDete_start > timeout_stuck:
 					stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
 					if stuckFlug == 1:
-						Motor.motor(-70, -70, 3)
-						Motor.motor(-70, 70, 3)
-						Motor.motor(70, 70, 3)
-						Motor.motor(70, -70, 3)
+						Motor.motor(-80, -80, 3, 1)
+						Motor.motor(0 ,0, 2)
+						Motor.motor(-80, 80, 3, 1)
+						Motor.motor(0 ,0, 2)
+						Motor.motor(80, 80, 3, 1)
+						Motor.motor(0 ,0, 2)
+						Motor.motor(80, -80, 3, 1)
 						Motor.motor(0, 0, 2)
-						goalcount = 0
 					t_stuckDete_start = time.time()
-
+				
 				# --- get information --- #
+				Motor.motor(0, 0, 2)
+				Motor.motor(15,15, 0.9)
+				Motor.motor(0, 0, 1.0)
 				goalFlug, goalArea, goalGAP, photoName = goal_detection.GoalDetection(photopath, H_min, H_max, S_thd, goalthd)
 				print("flug", goalFlug, "area", goalArea, "GAP", goalGAP)
 				#print("bomb",bomb)
 
 				# --- goal --- #
 				if goalFlug == 0:
-					Motor.motor(60, 60 + mp_adj, 0.4)
-					Motor.motor(0, 0, 0.4)
+					Motor.motor(30, 30 + mp_adj, 0.4)
+					Motor.motor(0, 0, 0.8)
 
 				# --- not detect --- #
 				elif goalFlug == -1:
 					if bomb == 1:
-						Motor.motor(mp_max, mp_min + mp_adj, 0.7)
-						Motor.motor(0, 0, 0.7)
+						Motor.motor(mp_max, mp_min + mp_adj, 0.2, 1)
+						Motor.motor(0, 0, 0.8)
 						bomb = 1
 					else:
-						Motor.motor(mp_min, mp_max + mp_adj, 0.7)	
-						Motor.motor(0, 0, 0.7)
+						Motor.motor(mp_min, mp_max + mp_adj, 0.2, 1)
+						Motor.motor(0, 0, 0.8)
 						bomb = 0
 
 				# --- detect but no goal --- #
-				else:
-					#if goalcount == 0:
+				elif goalFlug < 100:
 					# --- target left --- #
 					if goalArea < 3000 and goalArea > 0 and goalGAP < 0:
 						MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-						Motor.motor(mp_max - MP, mp_max + mp_adj, 0.8)
+						Motor.motor(mp_max - MP, mp_max + mp_adj, 0.6)
 						Motor.motor(0, 0, 0.8)
 						bomb = 1
-						#goalcount = 1
 					# --- target right --- #
 					elif goalArea < 3000 and goalArea > 0 and goalGAP >= 0:
 						MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-						Motor.motor(mp_max, mp_max - MP + mp_adj, 0.8)
+						Motor.motor(mp_max, mp_max - MP + mp_adj, 0.6)
 						Motor.motor(0, 0, 0.8)
 						bomb = 0
-						#goalcount = 1
 					else:
 						# --- near the target --- #
 						if goalGAP < 0:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-							Motor.motor(mp_min, mp_max + MP + mp_adj, 0.5)
-							Motor.motor(0, 0, 0.5)
+							Motor.motor(mp_min, mp_max + MP + mp_adj, 0.2, 1)
+							Motor.motor(0, 0, 0.8)
 							bomb = 1
-						#goalcount = 1
-						elif goalGAP >= 0:
-							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.5)
-							Motor.motor(0, 0, 0.5)
-							bomb = 0
-						#goalcount = 1
 						else:
-							print("error")
+							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
+							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.2, 1)
+							Motor.motor(0, 0, 0.8)
+							bomb = 0
+				elif goalFlug > 105:
+					goalFlug = 0
+					goalBufFlug = 0
+				else:
+					pass
+
 				Other.saveLog(goalDetectionLog, time.time() - t_start, gpsData, goalFlug, goalArea, goalGAP, photoName)
 				Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 				IM920.Send("P8D")

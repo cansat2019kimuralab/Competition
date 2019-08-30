@@ -14,8 +14,8 @@ import warnings
 from PIL import Image
 from matplotlib import pyplot as plt
 
-baudrate = 57600
-comNum = 'COM6'
+baudrate = 115200
+comNum = 'COM7'
 com = 0
 receptionLog = r"communicationLog.txt"
 receptionDecrptionLog = r"communicationDecryptionLog.txt"
@@ -62,7 +62,7 @@ def Reception(mybaudrate =19200):
             cngtext += chr(int(x,16))
     except Exception:
         cngtext = ""
-        print("No Data")
+        #print("No Data")
     return text, cngtext
 
 def saveLog(path, *data):
@@ -105,7 +105,9 @@ if __name__ == "__main__":
                     receivePhotoFlug = 0
                     for i in range(len(array)):
                         for j in range(len(array[i])):
-                            if np.allclose(array[i][j], [0, 0, 0]):
+                            if np.allclose(array[i][j], [0, 0, 0]): 
+                                print(i, j)
+                                count = count + 1  
                                 for k in range(len(array[i][j])):
                                     pixel = 0
                                     num = 0
@@ -121,8 +123,7 @@ if __name__ == "__main__":
                                     if j != 79:
                                         pixel = pixel + array[i][j+1][k]
                                         num = num + 1
-                                    array[i][j][k] = int(pixel / num) 
-                                    count = count + 1                   
+                                    array[i][j][k] = int(pixel / num)                 
                     restorePhotoName = fileName(restorePhotoPath, 'jpg')
                     cv2.imwrite(restorePhotoName, array)
                     print(count)
@@ -143,7 +144,6 @@ if __name__ == "__main__":
                     receivePhotoNum[i] = int(receivePhotoData[i])
 
                 print(receivePhotoNum)
-            
                 for i in range(3):
                     array[receivePhotoNum[0]][receivePhotoNum[1]][i] = receivePhotoNum[i+2]
     except:
