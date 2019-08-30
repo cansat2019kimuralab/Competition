@@ -4,6 +4,7 @@ sys.path.append('/home/pi/git/kimuralab/Detection/ParachuteDetection')
 sys.path.append('/home/pi/git/kimuralab/Detection/GoalDetection')
 sys.path.append('/home/pi/git/kimuralab/Detection/ReleaseAndLandingDetection')
 sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/Calibration')
+sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/Control')
 sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/Goal')
 sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/ParaAvoidance')
 sys.path.append('/home/pi/git/kimuralab/IntegratedProgram/Running')
@@ -21,6 +22,7 @@ sys.path.append('/home/pi/git/kimuralab/Other')
 sys.path.append('/home/pi/git/kimuralab/Mission')
 import binascii
 import difflib
+import math
 import numpy as np
 import os
 import pigpio
@@ -41,6 +43,7 @@ import Motor
 import Other
 import ParaDetection
 import ParaAvoidance
+import pidControl
 import Release
 import RunningGPS
 import sendPhoto
@@ -178,16 +181,44 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	#phaseChk = 5
+	phaseChk = 7
 
 def transmitPhoto():
 	global t_start
 	photoName = Capture.Capture(photopath)
 	Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 	print("Send Photo")
-	sendPhoto.sendPhoto(photoName)
+	#sendPhoto.sendPhoto(photoName)
 	print("Send Photo Finished")
 	Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
+
+def calibration():
+	mPL, mPR, mPS = 0, 0, 0
+	dt = 0.05
+	roll = 0
+	time.sleep(1)
+	fileCal = Other.fileName(calibrationLog, "txt")
+
+	print("Calibration Start")
+	Motor.motor(0, 30, 1)
+	while(math.fabs(roll) <= 720):
+		mPL, mPR, mPS, bmx055data = pidControl.pidSpin(300, 1.0, 1.1, 0.2, dt)
+		with open(fileCal, 'a') as f:
+			for i in range(6, 8):
+				#print(str(bmx055data[i]) + "\t", end="")
+					f.write(str(bmx055data[i]) + "\t")
+			#print()
+			f.write("\n")
+		roll = roll + bmx055data[5] * dt
+		Motor.motor(mPL, mPR, dt, 1)
+	Motor.motor(0, 0, 1)
+	
+	calData = Calibration.Calibration(fileCal)
+	Other.saveLog(fileCal, ellipseScale)
+	Other.saveLog(fileCal, time.time() - t_start)
+
+	print("Calibration Finished")
+	return calData
 
 def close():
 	GPS.closeGPS()
@@ -400,16 +431,7 @@ if __name__ == "__main__":
 
 					#Every [timeout_calibratoin] second,  Calibrate
 					print("Calibration")
-					fileCal = Other.fileName(calibrationLog, "txt")
-					Motor.motor(60, 10, 2)
-					stuckFlug = stuckDetection.BMXstuckDetection(mp_max, 40, 50, 20, 1)
-					print(stuckFlug)
-					if stuckFlug == 0:
-						Calibration.readCalData(fileCal)
-						ellipseScale = Calibration.Calibration(fileCal)
-						Other.saveLog(fileCal, ellipseScale)
-						Other.saveLog(fileCal, time.time() - t_start)
-					Motor.motor(0, 0, 5)
+					ellipseScale = calibration()
 					t_calib_origin = time.time()
 
 				# --- Taking Photo --- #
