@@ -14,7 +14,7 @@ import warnings
 from PIL import Image
 from matplotlib import pyplot as plt
 
-baudrate = 115200
+baudrate = 19200
 comNum = 'COM7'
 com = 0
 receptionLog = r"communicationLog.txt"
@@ -24,7 +24,7 @@ receivePhotoArrayLog = ""
 array = [[[0]*3]*80]*60
 array = np.zeros_like(array)
 I = list(range(5))
-receivePhotFlug = 0
+receivePhotoFlug = 0
 receivePhotoPath = "receivePhoto"
 restorePhotoPath = "restorePhoto"
 receivePhotoName = ""
@@ -38,7 +38,7 @@ def setSerial(mybaudrate=19200):
         baudrate=mybaudrate,
         bytesize=serial.EIGHTBITS,
         parity=serial.PARITY_NONE,
-        timeout=5,
+        timeout=3,
         xonxoff=False,
         rtscts=False,
         writeTimeout=None,
@@ -53,17 +53,21 @@ def Reception(mybaudrate =19200):
     try:
         com.flushInput()
         cngtext = ""
+        power=""
         text = com.readline().decode('utf-8').strip()
         com.flushOutput()
         text = text.replace("\r\n","")
         textData = text.split(":")[1]
+        rssi  =text.split(":")[0]
+        rssi = rssi.split(",")[2]
         textData = textData.split(",")
         for x in textData:
             cngtext += chr(int(x,16))
+        power = int(rssi,16) - 235
     except Exception:
         cngtext = ""
-        #print("No Data")
-    return text, cngtext
+        #print(traceback.format_exc())
+    return text, cngtext, power 
 
 def saveLog(path, *data):
 	with open(path, "a") as f:
@@ -89,19 +93,20 @@ if __name__ == "__main__":
         count = 0
         com = setSerial(baudrate)
         while 1:
-            receiveData, receiveDataDec = Reception(baudrate)
+            receiveData, receiveDataDec, power = Reception(baudrate)
             if(receiveDataDec == ""):
-                print("No Data")
+                print(str(datetime.datetime.now())+"        No Data")
                 continue
             elif(65 <= ord(receiveDataDec[0]) <= 90):
                 # --- Large Alphabet --- #
-                print(receiveDataDec)
+                print(str(datetime.datetime.now())+"      "+str(power)+"dbm      "+receiveDataDec)
                 saveLog(receptionLog, datetime.datetime.now(), receiveData)
-                saveLog(receptionDecrptionLog, datetime.datetime.now(), receiveDataDec)
+                saveLog(receptionDecrptionLog, datetime.datetime.now(), power, receiveDataDec)
                 if(receivePhotoFlug == 1):
                     receivePhotoName = fileName(receivePhotoPath, 'jpg')
                     cv2.imwrite(receivePhotoName, array)
                     receivePhotoArrayLog = fileName(receivePhotoArrayLogPath, 'txt')
+                    np.save('sample_.npy', array)
                     receivePhotoFlug = 0
                     for i in range(len(array)):
                         for j in range(len(array[i])):
