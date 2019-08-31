@@ -85,10 +85,12 @@ bmx055data = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]	#variable to store BMX055 dat
 # --- variable for Judgement --- #
 lcount = 0			#lux count for release
 acount = 0			#press count for release
+fcount = 0			#photo count for emergency release
 pcount = 0			#press count for land
 GAcount = 0
 gacount = 0			#GPSheight count for land
 mcount = 0			#Magnet count
+
 luxjudge = 0		#for release
 pressjudge = 0		#for release and land
 magnetlandjudge=0   #for emergency landjudge
