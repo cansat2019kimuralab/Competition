@@ -85,10 +85,10 @@ bmx055data = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]	#variable to store BMX055 dat
 # --- variable for Judgement --- #
 lcount = 0			#lux count for release
 acount = 0			#press count for release
-Pcount = 0			#press count for land
+pcount = 0			#press count for land
 GAcount = 0
 gacount = 0			#GPSheight count for land
-Mcount = 0			#Magnet count
+mcount = 0			#Magnet count
 luxjudge = 0		#for release
 pressjudge = 0		#for release and land
 magnetlandjudge=0   #for emergency landjudge
@@ -289,7 +289,6 @@ if __name__ == "__main__":
 			while (time.time() - t_release_start <= t_release):
 				luxjudge,lcount = Release.luxdetect()
 				pressjudge,acount = Release.pressdetect()
-				print(lcount, acount)
 				t1 = time.time()
 				if luxjudge == 1 or pressjudge == 1:
 					Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Sensor", luxjudge, pressjudge)
@@ -305,7 +304,7 @@ if __name__ == "__main__":
 				else:
 					print("Rover is in rocket")
 					#IM920.Send("P3D")
-
+				print("l"+str(lcount)+"a"+ str(acount),+"f"+str(fcount))
 				# --- Save Log and Take Photo --- #
 				gpsData = GPS.readGPS()
 				Other.saveLog(releaseLog, time.time() - t_start, acount, lcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
@@ -327,9 +326,9 @@ if __name__ == "__main__":
 
 			# --- Landing Judgement, "while" is for timeout --- #
 			while(time.time() - t_land_start <= t_land):
-				pressjudge, Pcount = Land.pressdetect()
+				pressjudge, pcount = Land.pressdetect()
 				#gpsjudge, gacount = Land.gpsdetect()
-
+				print(pcount)
 				if pressjudge == 1: #and gpsdetect == 1:
 					Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Sensor", pressjudge, gpsjudge)
 					print("Rover has Landed")
@@ -340,14 +339,14 @@ if __name__ == "__main__":
 				#print("Landing JudgementNow")
 
 				elif pressjudge == 2: #when bme is dead
-					magnetlandjudge,Mcount = Land.bmxdetect()
+					magnetlandjudge,mcount = Land.bmxdetect()
 					if magnetlandjudge == 1:
 						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by BMX", pressjudge, magnetlandjudge)
 						print("Rover has Emergency landed")
 						break
 					elif magnetlandjudge == 0:
 						print("emergency Descend now")
-
+				print("p"+str(pcount+"m"+str(mcount)))
 				# --- Save Log and Take Photo--- #
 				for i in range(3):
 					Other.saveLog(landingLog ,time.time() - t_start, Pcount, gacount, Mcount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
