@@ -286,16 +286,16 @@ if __name__ == "__main__":
 
 			# --- Release Judgement, "while" is for timeout --- #
 			while (time.time() - t_release_start <= t_release):
-				luxjudge,lcount = Release.luxjudge()
-				pressjudge,acount = Release.pressjudge()
+				luxjudge,lcount = Release.luxdetect()
+				pressjudge,acount = Release.pressdetect()
 				print(lcount, acount)
 				t1 = time.time()
 				if luxjudge == 1 or pressjudge == 1:
 					Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Sensor", luxjudge, pressjudge)
 					print("Rover has released")
 					break
-				elif luxjudge ==2 or pressjudge == 2:
-					photoreleasejudge,fcount=Release.photoreleasejudge(photoname)
+				elif luxjudge == 2 or pressjudge == 2:
+					photoreleasejudge,fcount=Release.photoreleasedetect(photoname)
 					if photoreleasejudge == 1:
 						print("Rover has release by photojudge")
 						break
@@ -326,20 +326,20 @@ if __name__ == "__main__":
 
 			# --- Landing Judgement, "while" is for timeout --- #
 			while(time.time() - t_land_start <= t_land):
-				pressjudge, Pcount = Land.pressjudge()
-				#gpsjudge, gacount = Land.gpsjudge()
+				pressjudge, Pcount = Land.pressdetect()
+				#gpsjudge, gacount = Land.gpsdetect()
 
-				if pressjudge == 1: #and gpsjudge == 1:
+				if pressjudge == 1: #and gpsdetect == 1:
 					Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Sensor", pressjudge, gpsjudge)
 					print("Rover has Landed")
 					break
-				elif pressjudge == 0: #and gpsjudge == 0:
+				elif pressjudge == 0: #and gpsdetect == 0:
 				    print("Descend now ")
 				#elif pressjudge == 1 : #or gpsjudge == 1:
 				#print("Landing JudgementNow")
 
 				elif pressjudge == 2: #when bme is dead
-					magnetlandjudge,Mcount = Land.bmxjudge()
+					magnetlandjudge,Mcount = Land.bmxdetect()
 					if magnetlandjudge == 1:
 						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by BMX", pressjudge, gmagnetlandjudge)
 						print("Rover has Emergency landed")
