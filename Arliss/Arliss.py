@@ -295,6 +295,13 @@ if __name__ == "__main__":
 					Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Sensor", luxjudge, pressjudge)
 					print("Rover has released")
 					break
+				elif luxjudge ==2 or pressjudge == 2:
+					photoreleasejudge,fcount=Release.photoreleasejudge(photoname)
+					if photoreleasejudge == 1:
+						print("Rover has release by photojudge")
+						break
+					elif photoreleasejudge == 0:
+						print("i2c is dead!")
 				else:
 					print("Rover is in rocket")
 					#IM920.Send("P3D")
@@ -332,8 +339,8 @@ if __name__ == "__main__":
 				#elif pressjudge == 1 : #or gpsjudge == 1:
 				#print("Landing JudgementNow")
 
-				elif pressjudge == -1: #when bme is dead
-					Mcount,magnetlandjudge = Land.bmxjudge()
+				elif pressjudge == 2: #when bme is dead
+					magnetlandjudge,Mcount = Land.bmxjudge()
 					if magnetlandjudge == 1:
 						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by BMX", pressjudge, gmagnetlandjudge)
 						print("Rover has Emergency landed")
