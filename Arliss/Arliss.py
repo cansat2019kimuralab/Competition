@@ -72,7 +72,7 @@ t_goalDete_start = 0
 t_stuckDete_start = 0
 timeout_calibration = 180	#time for calibration timeout
 timeout_parachute = 60
-timeout_takePhoto = 10		#time for taking photo timeout
+timeout_takePhoto = 30		#time for taking photo timeout
 timeout_sendPhoto = 120		#time for sending photo timeout
 timeout_goalDete = 300
 timeout_stuck = 100
@@ -121,7 +121,7 @@ ellipseScale = [-99.79881015576746, 171.782066653816, 1.586018339640338, 0.95215
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon = 35.924008, 139.912257	#Coordinates of That time
+gLat, gLon =  35.924013, 139.912167	#Coordinates of That time
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
@@ -131,7 +131,7 @@ kp = 0.7							#Proportional Gain
 stuckMode = [0, 0]					#Variable for Stuck
 
 # --- variable for Goal Detection --- #
-maxMP = 50							#Maximum Motor Power
+maxMP = 70							#Maximum Motor Power
 mp_min = 20							#motor power for Low level
 mp_max = 60							#motor power fot High level
 mp_adj = -3							#adjust motor power
@@ -182,8 +182,8 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 7
-	
+	#phaseChk = 7
+
 def transmitPhoto():
 	global t_start
 	photoName = Capture.Capture(photopath)
@@ -194,6 +194,7 @@ def transmitPhoto():
 	Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
 
 def calibration():
+	global ellipseScale
 	mPL, mPR, mPS = 0, 0, 0
 	dt = 0.05
 	roll = 0
@@ -202,7 +203,14 @@ def calibration():
 
 	print("Calibration Start")
 	Motor.motor(0, 30, 1)
+	t_cal_start = time.time()
 	while(math.fabs(roll) <= 720):
+		if(time.time() - t_cal_start >= 15):
+			calData = ellipseScale
+			Motor.motor(0, 0, 1)
+			Motor.motor(-60, -60, 2)
+			break
+
 		mPL, mPR, mPS, bmx055data = pidControl.pidSpin(300, 1.0, 1.1, 0.2, dt)
 		with open(fileCal, 'a') as f:
 			for i in range(6, 8):
@@ -212,11 +220,14 @@ def calibration():
 			f.write("\n")
 		roll = roll + bmx055data[5] * dt
 		Motor.motor(mPL, mPR, dt, 1)
-	Motor.motor(0, 0, 1)
+	else:
+		Motor.motor(0, 0, 1)
 	
-	calData = Calibration.Calibration(fileCal)
-	Other.saveLog(fileCal, ellipseScale)
-	Other.saveLog(fileCal, time.time() - t_start)
+		calData = Calibration.Calibration(fileCal)
+		Other.saveLog(fileCal, ellipseScale)
+		Other.saveLog(fileCal, time.time() - t_start)
+
+	Motor.motor(0, 0, 1)
 
 	print("Calibration Finished")
 	return calData
@@ -343,7 +354,10 @@ if __name__ == "__main__":
 			print("Melting Phase Started")
 			IM920.Send("P5S")
 			Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting Start")
-			Melting.Melting(t_melt)
+			for i in range(3):
+				print("Melting " + str(i))
+				Melting.Melting(t_melt)
+				time.sleep(1)
 			Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting Finished")
 			IM920.Send("P5F")
 
@@ -378,15 +392,17 @@ if __name__ == "__main__":
 			Motor.motor(15,15, 0.9)
 			Motor.motor(0, 0, 0.9)
 			t_paraDete_start = time.time()
-			while BMX055.bmx055_read()[2] < 5:
+			BMX055data = BMX055.bmx055_read()
+			while BMX055data[2] < 5:
 				if time.time() - t_paraDete_start > timeout_parachute:
 					break
-				Motor.motor(15, 15, 0.9)
-				Motor.motor(0, 0, 0.9)
 				Motor.motor(80, 80, 0.2, 1)
 				Motor.motor(0, 0, 0.8)
 				Motor.motor(-80, -80, 0.2, 1)
 				Motor.motor(0, 0, 0.8)
+				Motor.motor(15, 15, 0.9)
+				Motor.motor(0, 0, 2)
+				BMX055data = BMX055.bmx055_read()
 
 			# --- Parachute Avoidance --- #
 			print("START: Parachute avoidance")
@@ -436,11 +452,19 @@ if __name__ == "__main__":
 
 			t_calib_origin = time.time() - timeout_calibration - 20
 			t_takePhoto_start = time.time()
-			while(disGoal >= 3):
+			while(disGoal >= 5):
 				# --- Get GPS Data --- #
+				if(disGoal <= 15):
+					kp = 1.0
+					maxMP = 40
+				else:
+					kp = 0.7
+					maxMP = 70
+
 				if(RunningGPS.checkGPSstatus(gpsData)):
 					nLat = gpsData[1]
 					nLon = gpsData[2]
+					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					IM920.Send("G" + str(nLat) + "	" + str(nLon))
 
 				# --- Calibration --- #
@@ -456,24 +480,39 @@ if __name__ == "__main__":
 					ellipseScale = calibration()
 					t_calib_origin = time.time()
 
-				# --- Taking Photo --- #
+				# --- Taking Photo and Check Stuck--- #
 				if(time.time() - t_takePhoto_start > timeout_takePhoto):
 					IM920.Send("P7T")
 					Motor.motor(0, 0, 2)
 					Motor.motor(30, 30, 0.5)
 					Motor.motor(0, 0, 0.5)
+
+					# --- Take Photo --- #
 					photoName = Capture.Capture(photopath)
 					Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
+
+					# --- Read GPS Data --- #
 					gpsData = GPS.readGPS()
 					while(not RunningGPS.checkGPSstatus(gpsData)):
 						gpsData = GPS.readGPS()
 						time.sleep(1)
+
+					# --- Check Stuck Mode --- #
 					stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
-					if(stuckMode[0] == 1):
+					if not (stuckMode[0] == 0):
 						Other.saveLog(stuckLog, time.time() - t_start, gpsData, stuckMode)
-						if(stuckMode[1] >= 2):
-							print("Stuck" + str(stuckMode))
-							Motor.motor(70, 65, 5)
+						if(stuckMode[0] == 2):
+							if(stuckMode[1] <= 3):
+								print("Stuck" + str(stuckMode))
+								Motor.motor(80, 80, 3)
+								Motor.motor(0, 0, 1)
+							else:
+								Motor.motor(60, -60, 1)
+								Motor.motor(80, 80, 3)
+								Motor.motor(0, 0, 1)
+						elif(stuckMode[0] == 1):
+							print("Roll Overed")
+
 					t_takePhoto_start = time.time()
 
 				# --- Calculate disGoal and relAng and Motor Power --- #
@@ -485,7 +524,7 @@ if __name__ == "__main__":
 				mPL, mPR, mPS = RunningGPS.runMotorSpeed(rAng, kp, maxMP)	#Calculate Motor Power
 
 				# --- Save Log --- #
-				print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+				#print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 				Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 				gpsData = GPS.readGPS()
 				Motor.motor(mPL, mPR, 0.1, 1)
@@ -509,7 +548,7 @@ if __name__ == "__main__":
 					break
 				gpsdata = GPS.readGPS()
 				goalBufFlug = goalFlug
-				
+				"""				
 				# --- Stuck Detection --- #
 				if time.time() - t_stuckDete_start > timeout_stuck:
 					stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
@@ -523,7 +562,7 @@ if __name__ == "__main__":
 						Motor.motor(80, -80, 3, 1)
 						Motor.motor(0, 0, 2)
 					t_stuckDete_start = time.time()
-				
+				"""
 				# --- get information --- #
 				Motor.motor(0, 0, 2)
 				Motor.motor(15,15, 0.9)
@@ -540,11 +579,11 @@ if __name__ == "__main__":
 				# --- not detect --- #
 				elif goalFlug == -1:
 					if bomb == 1:
-						Motor.motor(mp_max, mp_min + mp_adj, 0.2, 1)
+						Motor.motor(mp_max, mp_min + mp_adj, 0.4)
 						Motor.motor(0, 0, 0.8)
 						bomb = 1
 					else:
-						Motor.motor(mp_min, mp_max + mp_adj, 0.2, 1)
+						Motor.motor(mp_min, mp_max + mp_adj, 0.4)
 						Motor.motor(0, 0, 0.8)
 						bomb = 0
 
@@ -566,12 +605,12 @@ if __name__ == "__main__":
 						# --- near the target --- #
 						if goalGAP < 0:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-							Motor.motor(mp_min, mp_max + MP + mp_adj, 0.2, 1)
+							Motor.motor(mp_min, mp_max + MP + mp_adj, 0.4)
 							Motor.motor(0, 0, 0.8)
 							bomb = 1
 						else:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.2, 1)
+							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.4)
 							Motor.motor(0, 0, 0.8)
 							bomb = 0
 				elif goalFlug > 105:
