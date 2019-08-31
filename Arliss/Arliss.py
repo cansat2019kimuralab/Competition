@@ -342,7 +342,7 @@ if __name__ == "__main__":
 				elif pressjudge == 2: #when bme is dead
 					magnetlandjudge,Mcount = Land.bmxdetect()
 					if magnetlandjudge == 1:
-						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by BMX", pressjudge, gmagnetlandjudge)
+						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by BMX", pressjudge, magnetlandjudge)
 						print("Rover has Emergency landed")
 						break
 					elif magnetlandjudge == 0:
