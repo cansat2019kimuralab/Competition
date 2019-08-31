@@ -121,7 +121,7 @@ ellipseScale = [-99.79881015576746, 171.782066653816, 1.586018339640338, 0.95215
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon = 35.923988, 139.91303	#Coordinates of That time
+gLat, gLon =  35.924013, 139.912167	#Coordinates of That time
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
@@ -194,6 +194,7 @@ def transmitPhoto():
 	Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
 
 def calibration():
+	global ellipseScale
 	mPL, mPR, mPS = 0, 0, 0
 	dt = 0.05
 	roll = 0
@@ -202,7 +203,14 @@ def calibration():
 
 	print("Calibration Start")
 	Motor.motor(0, 30, 1)
+	t_cal_start = time.time()
 	while(math.fabs(roll) <= 720):
+		if(time.time() - t_cal_start >= 15):
+			calData = ellipseScale
+			Motor.motor(0, 0, 1)
+			Motor.motor(-60, -60, 2)
+			break
+
 		mPL, mPR, mPS, bmx055data = pidControl.pidSpin(300, 1.0, 1.1, 0.2, dt)
 		with open(fileCal, 'a') as f:
 			for i in range(6, 8):
@@ -212,11 +220,14 @@ def calibration():
 			f.write("\n")
 		roll = roll + bmx055data[5] * dt
 		Motor.motor(mPL, mPR, dt, 1)
-	Motor.motor(0, 0, 1)
+	else:
+		Motor.motor(0, 0, 1)
 	
-	calData = Calibration.Calibration(fileCal)
-	Other.saveLog(fileCal, ellipseScale)
-	Other.saveLog(fileCal, time.time() - t_start)
+		calData = Calibration.Calibration(fileCal)
+		Other.saveLog(fileCal, ellipseScale)
+		Other.saveLog(fileCal, time.time() - t_start)
+
+	Motor.motor(0, 0, 1)
 
 	print("Calibration Finished")
 	return calData
@@ -343,7 +354,10 @@ if __name__ == "__main__":
 			print("Melting Phase Started")
 			IM920.Send("P5S")
 			Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting Start")
-			Melting.Melting(t_melt)
+			for i in range(3):
+				print("Melting " + str(i))
+				Melting.Melting(t_melt)
+				time.sleep(1)
 			Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting Finished")
 			IM920.Send("P5F")
 
