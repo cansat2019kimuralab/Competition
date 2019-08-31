@@ -56,7 +56,7 @@ phaseChk = 0	#variable for phase Check
 
 # --- variable of time setting --- #
 t_start  = 0.0				#time when program started
-t_sleep = 30				#time for sleep phase
+t_sleep = 3				#time for sleep phase
 t_release = 120				#time for release(loopx)
 t_land = 210				#time for land(loopy)
 t_melt = 5					#time for melting
@@ -182,7 +182,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 7
+	#phaseChk = 7
 
 def transmitPhoto():
 	global t_start
