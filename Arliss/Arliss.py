@@ -309,7 +309,7 @@ if __name__ == "__main__":
 				print("l"+str(lcount)+"  a"+ str(acount)+"  f"+str(fcount))
 				# --- Save Log and Take Photo --- #
 				gpsData = GPS.readGPS()
-				Other.saveLog(releaseLog, time.time() - t_start, acount, lcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
+				Other.saveLog(releaseLog, time.time() - t_start, acount, lcount, fcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
 				takePhoto()
 				#IM920.Send("P3D")
 			else:
@@ -351,7 +351,7 @@ if __name__ == "__main__":
 				print("p"+str(pcount)+"  m"+str(mcount))
 				# --- Save Log and Take Photo--- #
 				for i in range(3):
-					Other.saveLog(landingLog ,time.time() - t_start, Pcount, gacount, Mcount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
+					Other.saveLog(landingLog ,time.time() - t_start, pcount, gacount, mcount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
 					takePhoto()
 				IM920.Send("P4D")
 			else:
