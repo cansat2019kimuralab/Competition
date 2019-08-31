@@ -445,8 +445,8 @@ if __name__ == "__main__":
 					maxMP = 40
 				else:
 					kp = 0.7
-					maxMP = 70					
-				
+					maxMP = 70
+
 				if(RunningGPS.checkGPSstatus(gpsData)):
 					nLat = gpsData[1]
 					nLon = gpsData[2]
@@ -482,7 +482,7 @@ if __name__ == "__main__":
 					while(not RunningGPS.checkGPSstatus(gpsData)):
 						gpsData = GPS.readGPS()
 						time.sleep(1)
-					
+
 					# --- Check Stuck Mode --- #
 					stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
 					if not (stuckMode[0] == 0):
@@ -496,9 +496,9 @@ if __name__ == "__main__":
 								Motor.motor(60, -60, 1)
 								Motor.motor(80, 80, 3)
 								Motor.motor(0, 0, 1)
-						elif(stuckMode[0] == 1)
+						elif(stuckMode[0] == 1):
 							print("Roll Overed")
-					
+
 					t_takePhoto_start = time.time()
 
 				# --- Calculate disGoal and relAng and Motor Power --- #
