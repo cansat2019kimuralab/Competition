@@ -186,12 +186,19 @@ def setup():
 
 def transmitPhoto():
 	global t_start
-	photoName = Capture.Capture(photopath)
-	Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
+	takePhoto()
 	print("Send Photo")
 	#sendPhoto.sendPhoto(photoName)
 	print("Send Photo Finished")
 	Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
+
+def takePhoto():
+	global photoName
+	photo = ""
+	photo = Capture.Capture(photopath)
+	Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
+	if not(photo == "Null"):
+		photoName = photo
 
 def calibration():
 	global ellipseScale
@@ -265,8 +272,7 @@ if __name__ == "__main__":
 			# --- Sleep --- #
 			while(time.time() - t_sleep_start <= t_sleep):
 				Other.saveLog(sleepLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), TSL2561.readLux(), BMX055.bmx055_read())
-				photoName = Capture.Capture(photopath)
-				Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
+				takePhoto()
 				time.sleep(1)
 				#IM920.Send("P2D")
 			#IM920.Send("P2F")
@@ -295,9 +301,7 @@ if __name__ == "__main__":
 				# --- Save Log and Take Photo --- #
 				gpsData = GPS.readGPS()
 				Other.saveLog(releaseLog, time.time() - t_start, acount, lcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
-				photoName = Capture.Capture(photopath)
-				Other.saveLog(captureLog, time.time() - t_start, gpsData, BME280.bme280_read(), photoName)
-
+				takePhoto()
 				#IM920.Send("P3D")
 			else:
 				Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Timeout")
@@ -339,9 +343,7 @@ if __name__ == "__main__":
 				# --- Save Log and Take Photo--- #
 				for i in range(3):
 					Other.saveLog(landingLog ,time.time() - t_start, Pcount, gacount, Mcount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
-					photoName = Capture.Capture(photopath)
-					Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
-
+					takePhoto()
 				IM920.Send("P4D")
 			else:
 				Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Timeout")
@@ -488,9 +490,8 @@ if __name__ == "__main__":
 					Motor.motor(0, 0, 0.5)
 
 					# --- Take Photo --- #
-					photoName = Capture.Capture(photopath)
-					Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
-
+					takePhoto()
+					
 					# --- Read GPS Data --- #
 					gpsData = GPS.readGPS()
 					while(not RunningGPS.checkGPSstatus(gpsData)):
