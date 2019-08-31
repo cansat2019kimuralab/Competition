@@ -111,7 +111,7 @@ S_thd = 130			#Saturation threshold
 bomb = 0			#use for goalDete flug
 
 # --- variable for Transmit --- #
-mode = 1			#valiable for transmit mode 
+mode = 1			#valiable for transmit mode
 readmode = 0		#valiable for image read mode
 count = 0			#valiable for transmit count
 amari = 0
@@ -121,17 +121,17 @@ ellipseScale = [-99.79881015576746, 171.782066653816, 1.586018339640338, 0.95215
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon =  35.924013, 139.912167	#Coordinates of That time
+gLat, gLon = 35.918181, 139.90799	#Coordinates of That time
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
 rAng = 0.0							#Median of relAng [deg]
 mP, mPL, mPR, mPS = 0, 0, 0, 0		#Motor Power
-kp = 0.7							#Proportional Gain
+kp = 0.5							#Proportional Gain
 stuckMode = [0, 0]					#Variable for Stuck
+maxMP = 70							#Maximum Motor Power
 
 # --- variable for Goal Detection --- #
-maxMP = 70							#Maximum Motor Power
 mp_min = 20							#motor power for Low level
 mp_max = 60							#motor power fot High level
 mp_adj = -3							#adjust motor power
@@ -182,7 +182,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	#phaseChk = 7
+	phaseChk = 7
 
 def transmitPhoto():
 	global t_start
@@ -211,11 +211,12 @@ def calibration():
 	print("Calibration Start")
 	Motor.motor(0, 30, 1)
 	t_cal_start = time.time()
-	while(math.fabs(roll) <= 720):
-		if(time.time() - t_cal_start >= 15):
+	while(math.fabs(roll) <= 600):
+		if(time.time() - t_cal_start >= 10):
 			calData = ellipseScale
 			Motor.motor(0, 0, 1)
 			Motor.motor(-60, -60, 2)
+			Other.saveLog(fileCal, time.time() - t_start, "Calibration Failed")
 			break
 
 		mPL, mPR, mPS, bmx055data = pidControl.pidSpin(300, 1.0, 1.1, 0.2, dt)
@@ -229,7 +230,7 @@ def calibration():
 		Motor.motor(mPL, mPR, dt, 1)
 	else:
 		Motor.motor(0, 0, 1)
-	
+
 		calData = Calibration.Calibration(fileCal)
 		Other.saveLog(fileCal, ellipseScale)
 		Other.saveLog(fileCal, time.time() - t_start)
@@ -457,17 +458,17 @@ if __name__ == "__main__":
 			while(not RunningGPS.checkGPSstatus(gpsData)):
 				gpsData = GPS.readGPS()
 				time.sleep(1)
-			stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
+			#stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
 
 			t_calib_origin = time.time() - timeout_calibration - 20
 			t_takePhoto_start = time.time()
 			while(disGoal >= 5):
 				# --- Get GPS Data --- #
 				if(disGoal <= 15):
-					kp = 1.0
+					kp = 0.9
 					maxMP = 40
 				else:
-					kp = 0.7
+					kp = 0.3
 					maxMP = 70
 
 				if(RunningGPS.checkGPSstatus(gpsData)):
@@ -498,7 +499,7 @@ if __name__ == "__main__":
 
 					# --- Take Photo --- #
 					takePhoto()
-					
+
 					# --- Read GPS Data --- #
 					gpsData = GPS.readGPS()
 					while(not RunningGPS.checkGPSstatus(gpsData)):
@@ -532,10 +533,10 @@ if __name__ == "__main__":
 				mPL, mPR, mPS = RunningGPS.runMotorSpeed(rAng, kp, maxMP)	#Calculate Motor Power
 
 				# --- Save Log --- #
-				#print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+				print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 				Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 				gpsData = GPS.readGPS()
-				Motor.motor(mPL, mPR, 0.1, 1)
+				Motor.motor(mPL, mPR, 0.05, 1)
 			Motor.motor(0, 0, 1)
 			print("Running Phase Finished")
 			IM920.Send("P7F")
