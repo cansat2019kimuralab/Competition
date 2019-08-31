@@ -306,7 +306,7 @@ if __name__ == "__main__":
 				else:
 					print("Rover is in rocket")
 					#IM920.Send("P3D")
-				print("l"+str(lcount)+"a"+ str(acount)+"f"+str(fcount))
+				print("l"+str(lcount)+"  a"+ str(acount)+"  f"+str(fcount))
 				# --- Save Log and Take Photo --- #
 				gpsData = GPS.readGPS()
 				Other.saveLog(releaseLog, time.time() - t_start, acount, lcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
@@ -348,7 +348,7 @@ if __name__ == "__main__":
 						break
 					elif magnetlandjudge == 0:
 						print("emergency Descend now")
-				print("p"+str(pcount+"m"+str(mcount)))
+				print("p"+str(pcount)+"  m"+str(mcount))
 				# --- Save Log and Take Photo--- #
 				for i in range(3):
 					Other.saveLog(landingLog ,time.time() - t_start, Pcount, gacount, Mcount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
