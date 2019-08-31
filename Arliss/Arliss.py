@@ -296,7 +296,7 @@ if __name__ == "__main__":
 					print("Rover has released")
 					break
 				elif luxjudge == 2 or pressjudge == 2:
-					photoreleasejudge,fcount=Release.photoreleasedetect(photoname)
+					photoreleasejudge,fcount=Release.photoreleasedetect(photoName)
 					if photoreleasejudge == 1:
 						print("Rover has release by photojudge")
 						break
