@@ -441,7 +441,7 @@ if __name__ == "__main__":
 				if(RunningGPS.checkGPSstatus(gpsData)):
 					nLat = gpsData[1]
 					nLon = gpsData[2]
-					IM920.Send("G" + str(nLat) + ":" + str(nLon))
+					IM920.Send("G" + str(nLat) + "	" + str(nLon))
 
 				# --- Calibration --- #
 				if(time.time() - t_calib_origin > timeout_calibration):
