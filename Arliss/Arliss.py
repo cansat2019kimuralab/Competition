@@ -446,9 +446,11 @@ if __name__ == "__main__":
 				else:
 					kp = 0.7
 					maxMP = 70					
+				
 				if(RunningGPS.checkGPSstatus(gpsData)):
 					nLat = gpsData[1]
 					nLon = gpsData[2]
+					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					IM920.Send("G" + str(nLat) + "	" + str(nLon))
 
 				# --- Calibration --- #
@@ -464,24 +466,39 @@ if __name__ == "__main__":
 					ellipseScale = calibration()
 					t_calib_origin = time.time()
 
-				# --- Taking Photo --- #
+				# --- Taking Photo and Check Stuck--- #
 				if(time.time() - t_takePhoto_start > timeout_takePhoto):
 					IM920.Send("P7T")
 					Motor.motor(0, 0, 2)
 					Motor.motor(30, 30, 0.5)
 					Motor.motor(0, 0, 0.5)
+
+					# --- Take Photo --- #
 					photoName = Capture.Capture(photopath)
 					Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
+
+					# --- Read GPS Data --- #
 					gpsData = GPS.readGPS()
 					while(not RunningGPS.checkGPSstatus(gpsData)):
 						gpsData = GPS.readGPS()
 						time.sleep(1)
+					
+					# --- Check Stuck Mode --- #
 					stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
-					if(stuckMode[0] == 1):
+					if not (stuckMode[0] == 0):
 						Other.saveLog(stuckLog, time.time() - t_start, gpsData, stuckMode)
-						if(stuckMode[1] >= 2):
-							print("Stuck" + str(stuckMode))
-							Motor.motor(70, 65, 5)
+						if(stuckMode[0] == 2):
+							if(stuckMode[1] <= 3):
+								print("Stuck" + str(stuckMode))
+								Motor.motor(80, 80, 3)
+								Motor.motor(0, 0, 1)
+							else:
+								Motor.motor(60, -60, 1)
+								Motor.motor(80, 80, 3)
+								Motor.motor(0, 0, 1)
+						elif(stuckMode[0] == 1)
+							print("Roll Overed")
+					
 					t_takePhoto_start = time.time()
 
 				# --- Calculate disGoal and relAng and Motor Power --- #
@@ -493,7 +510,7 @@ if __name__ == "__main__":
 				mPL, mPR, mPS = RunningGPS.runMotorSpeed(rAng, kp, maxMP)	#Calculate Motor Power
 
 				# --- Save Log --- #
-				print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+				#print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 				Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 				gpsData = GPS.readGPS()
 				Motor.motor(mPL, mPR, 0.1, 1)
