@@ -345,7 +345,7 @@ if __name__ == "__main__":
 						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by BMX", pressjudge, gmagnetlandjudge)
 						print("Rover has Emergency landed")
 						break
-					elif magnetlandjusge == 0:
+					elif magnetlandjudge == 0:
 						print("emergency Descend now")
 
 				# --- Save Log and Take Photo--- #
