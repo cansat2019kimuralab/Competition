@@ -304,7 +304,7 @@ if __name__ == "__main__":
 				else:
 					print("Rover is in rocket")
 					#IM920.Send("P3D")
-				print("l"+str(lcount)+"a"+ str(acount),+"f"+str(fcount))
+				print("l"+str(lcount)+"a"+ str(acount)+"f"+str(fcount))
 				# --- Save Log and Take Photo --- #
 				gpsData = GPS.readGPS()
 				Other.saveLog(releaseLog, time.time() - t_start, acount, lcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
