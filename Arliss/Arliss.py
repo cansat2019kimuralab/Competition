@@ -312,12 +312,12 @@ if __name__ == "__main__":
 					print("Rover has Landed")
 					break
 				elif pressjudge == 0: #and gpsjudge == 0:
-				    print("Descend now taking photo")
+				    print("Descend now ")
 				#elif pressjudge == 1 : #or gpsjudge == 1:
 				#print("Landing JudgementNow")
 
 				elif pressjudge == -1: #when bme is dead
-					magnetlandjudge,Mcount = Land.bmxjudge()
+					Mcount,magnetlandjudge = Land.bmxjudge()
 					if magnetlandjudge == 1:
 						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by BMX", pressjudge, gmagnetlandjudge)
 						print("Rover has Emergency landed")
