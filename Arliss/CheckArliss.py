@@ -95,12 +95,12 @@ if __name__ == "__main__":
 			IM920.Strt("1")
 			for i in range(10): #IM920
 				data = IM920.Send("P" + str(i))
-				print("fastmode"+str(data))
+				print("fastmode "+str(data))
 				time.sleep(1)
 			IM920.Strt("2")
 			for i in range(10): #IM920
 				data = IM920.Send("P" + str(i))
-				print("distancemode"+str(data))
+				print("distancemode "+str(data))
 
 
 
