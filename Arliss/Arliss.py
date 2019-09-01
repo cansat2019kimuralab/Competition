@@ -197,6 +197,7 @@ def transmitPhoto():
 	Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
 	IM920.Strt(2)
 	time.sleep(1)
+
 def takePhoto():
 	global photoName
 	photo = ""
@@ -372,6 +373,7 @@ if __name__ == "__main__":
 				print("Melting " + str(i))
 				Melting.Melting(t_melt)
 				time.sleep(1)
+				Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting" + str(i))
 			Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting Finished")
 			IM920.Send("P5F")
 
@@ -515,17 +517,24 @@ if __name__ == "__main__":
 					if not (stuckMode[0] == 0):
 						Other.saveLog(stuckLog, time.time() - t_start, gpsData, stuckMode)
 						if(stuckMode[0] == 2):
-							if(stuckMode[1] <= 3):
+							# - Stuck -#
+							if(stuckMode[1] <= 1):
+								# - Stuck First Time - #
 								print("Stuck" + str(stuckMode))
-								Motor.motor(80, 80, 3)
 								Motor.motor(0, 0, 1)
+							elif(stuckoMode[1] <= 3):
+								# - Stuck a few Time - #
+								print("Stuck" + str(stuckMode))
 							else:
+								# - Stuck Many Many Time - #
+								print("Stuck" + str(stuckMode))								
+								Motor.motor(-60, -60, 2)
+								Motor.motor(0, 0, 1)
 								Motor.motor(60, -60, 1)
-								Motor.motor(80, 80, 3)
 								Motor.motor(0, 0, 1)
 						elif(stuckMode[0] == 1):
+							# - Roll Over - #
 							print("Roll Overed")
-
 					t_takePhoto_start = time.time()
 
 				# --- Calculate disGoal and relAng and Motor Power --- #
