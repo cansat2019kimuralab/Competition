@@ -92,10 +92,18 @@ if __name__ == "__main__":
 				time.sleep(1)
 
 			print("\n\nCommunication Test")
+			IM920.Strt(1)
 			for i in range(10): #IM920
 				data = IM920.Send("P" + str(i))
-				print(data)
+				print("fastmode"+str(data))
 				time.sleep(1)
+			IM920.Strt(2)
+			for i in range(10): #IM920
+				data = IM920.Send("P" + str(i))
+				print("distancemode"+str(data))
+
+
+
 	except:
 		pi.write(17, 0)
 		Motor.motor(0, 0, 1)
