@@ -56,17 +56,23 @@ def Reception(mybaudrate =19200):
         power=""
         text = com.readline().decode('utf-8').strip()
         com.flushOutput()
+        #print(text)
         text = text.replace("\r\n","")
         textData = text.split(":")[1]
         rssi  =text.split(":")[0]
-        rssi = rssi.split(",")[2]
-        textData = textData.split(",")
+        rssi=rssi.split(",")
+        if len(rssi)==3:
+            rssi = rssi[2]
+            power= int(rssi,16) - 235
+        else:
+            print("short ")
+        textData=textData.split(",")
         for x in textData:
             cngtext += chr(int(x,16))
-        power = int(rssi,16) - 235
     except Exception:
+        print(text)
         cngtext = ""
-        #print(traceback.format_exc())
+       # print(traceback.format_exc())
     return text, cngtext, power 
 
 def saveLog(path, *data):
@@ -148,7 +154,7 @@ if __name__ == "__main__":
                         receivePhotoData[i] = '0'
                     receivePhotoNum[i] = int(receivePhotoData[i])
 
-                print(receivePhotoNum)
+                print(str(power)+"dbm      "+str(receivePhotoNum))
                 for i in range(3):
                     array[receivePhotoNum[0]][receivePhotoNum[1]][i] = receivePhotoNum[i+2]
     except:
