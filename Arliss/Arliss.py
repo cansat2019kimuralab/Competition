@@ -188,12 +188,15 @@ def setup():
 
 def transmitPhoto():
 	global t_start
+	IM920.Strt(1)
+	time.sleep(1)
 	takePhoto()
 	print("Send Photo")
-	#sendPhoto.sendPhoto(photoName)
+	sendPhoto.sendPhoto(photoName)
 	print("Send Photo Finished")
 	Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
-
+	IM920.Strt(2)
+	time.sleep(1)
 def takePhoto():
 	global photoName
 	photo = ""
