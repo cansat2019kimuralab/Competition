@@ -123,7 +123,7 @@ ellipseScale = [-99.79881015576746, 171.782066653816, 1.586018339640338, 0.95215
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon = 35.918181, 139.90799	#Coordinates of That time
+gLat, gLon = 35.92387, 139.911907	#Coordinates of Goal
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
@@ -192,7 +192,7 @@ def transmitPhoto():
 	time.sleep(1)
 	takePhoto()
 	print("Send Photo")
-	sendPhoto.sendPhoto(photoName)
+	#sendPhoto.sendPhoto(photoName)
 	print("Send Photo Finished")
 	Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
 	IM920.Strt("2")  #distancemode
@@ -474,7 +474,7 @@ if __name__ == "__main__":
 					kp = 0.9
 					maxMP = 40
 				else:
-					kp = 0.3
+					kp = 0.5
 					maxMP = 70
 
 				if(RunningGPS.checkGPSstatus(gpsData)):
