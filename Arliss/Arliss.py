@@ -125,6 +125,7 @@ angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
 gLat, gLon = 35.923648, 139.912462	#Coordinates of Goal
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
+rsLat, rsLon = 0.0, 0.0				#Coordinates of Running Start Position
 nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
 rAng = 0.0							#Median of relAng [deg]
@@ -132,6 +133,7 @@ mP, mPL, mPR, mPS = 0, 0, 0, 0		#Motor Power
 kp = 0.5							#Proportional Gain
 stuckMode = [0, 0]					#Variable for Stuck
 maxMP = 70							#Maximum Motor Power
+relAngStatus = 0					#Used for ParaExist
 
 # --- variable for Goal Detection --- #
 mp_min = 10							#motor power for Low level
@@ -471,10 +473,12 @@ if __name__ == "__main__":
 				time.sleep(1)
 			#stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
 
+			rsLat = gpsData[1]
+			rsLon = gpsData[2]
 			t_calib_origin = time.time() - timeout_calibration - 20
 			t_takePhoto_start = time.time()
 			while(disGoal >= 5):
-				# --- Get GPS Data --- #
+				# --- Change Gain --- #
 				if(disGoal <= 15):
 					kp = 0.8
 					maxMP = 40
@@ -482,79 +486,108 @@ if __name__ == "__main__":
 					kp = 0.2
 					maxMP = 70
 
-				if(RunningGPS.checkGPSstatus(gpsData)):
-					nLat = gpsData[1]
-					nLon = gpsData[2]
-					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
-					IM920.Send("G" + str(nLat) + "	" + str(nLon))
+				disStart = RunningGPS.calGoal(nLat, nLon, rsLat, rsLon, nAng)
+				if(disStart[0] <= 10):
+					print("10m from Start Position")
+					# --- Set Rover toward Goal --- #
+					relAngStatus = 0
+					while(relAngStatus <= 10):
+						nAng = RunningGPS.calNAng(ellipseScale, angOffset)			#Calculate Rover Angle
+						relAng[2] = relAng[1]
+						relAng[1] = relAng[0]
+						disGoal, angGoal, rAng = RunningGPS.calGoal(nLat, nLon, gLat, gLon, nAng)
+						Motor.motor(rAng * 0.6 / 1.8, -rAng * 0.6 / 1.8, 0.1, 1)
+						if(math.fabs(rAng) <= 10):
+							relAngStatus = relAngStatus + 1
+						else:
+							relAngStatus = 0
+						print(relAngStatus)
 
-				# --- Calibration --- #
-				if(time.time() - t_calib_origin > timeout_calibration):
-					IM920.Send("P7C")
-					Motor.motor(0, 0, 2)
+					# --- Parachute Check --- #
+					paraExsist, paraArea, photoName = ParaDetection.ParaDetection(photopath, H_min, H_max, S_thd)
+					if(paraExsist):	# - Parachute Not Exsist - #
+						print("Parachute is not found")
+						Motor.motor(60, 60, 10)
+					else:			# - Parachute Exsist - #
+						print("Parachute is found")
+						Motor.motor(-15, -15, 1)
+						Motor.motor(-60, -40, 5)
+					Motor.motor(0, 0, 1)
+				elif(disStart[0] > 10):
+					# --- Get GPS Data --- #
+					if(RunningGPS.checkGPSstatus(gpsData)):
+						nLat = gpsData[1]
+						nLon = gpsData[2]
+						print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+						IM920.Send("G" + str(nLat) + "	" + str(nLon))
 
-					# --- Send Photo --- #
-					transmitPhoto()
+					# --- Calibration --- #
+					if(time.time() - t_calib_origin > timeout_calibration):
+						IM920.Send("P7C")
+						Motor.motor(0, 0, 2)
 
-					#Every [timeout_calibratoin] second,  Calibrate
-					print("Calibration")
-					ellipseScale = calibration()
-					t_calib_origin = time.time()
+						# --- Send Photo --- #
+						transmitPhoto()
 
-				# --- Taking Photo and Check Stuck--- #
-				if(time.time() - t_takePhoto_start > timeout_takePhoto):
-					IM920.Send("P7T")
-					Motor.motor(0, 0, 2)
-					Motor.motor(30, 30, 0.5)
-					Motor.motor(0, 0, 0.5)
+						#Every [timeout_calibratoin] second,  Calibrate
+						print("Calibration")
+						ellipseScale = calibration()
+						t_calib_origin = time.time()
 
-					# --- Take Photo --- #
-					takePhoto()
+					# --- Taking Photo and Check Stuck--- #
+					if(time.time() - t_takePhoto_start > timeout_takePhoto):
+						IM920.Send("P7T")
+						Motor.motor(0, 0, 2)
+						Motor.motor(30, 30, 0.5)
+						Motor.motor(0, 0, 0.5)
 
-					# --- Read GPS Data --- #
-					gpsData = GPS.readGPS()
-					while(not RunningGPS.checkGPSstatus(gpsData)):
+						# --- Take Photo --- #
+						takePhoto()
+
+						# --- Read GPS Data --- #
 						gpsData = GPS.readGPS()
-						time.sleep(1)
+						while(not RunningGPS.checkGPSstatus(gpsData)):
+							gpsData = GPS.readGPS()
+							time.sleep(1)
 
-					# --- Check Stuck Mode --- #
-					stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
-					if not (stuckMode[0] == 0):
-						Other.saveLog(stuckLog, time.time() - t_start, gpsData, stuckMode)
-						if(stuckMode[0] == 2):
-							# - Stuck -#
-							if(stuckMode[1] <= 1):
-								# - Stuck First Time - #
-								print("Stuck" + str(stuckMode))
-								Motor.motor(0, 0, 1)
-							elif(stuckMode[1] <= 3):
-								# - Stuck a few Time - #
-								print("Stuck" + str(stuckMode))
-							else:
-								# - Stuck Many Many Time - #
-								print("Stuck" + str(stuckMode))								
-								Motor.motor(-60, -60, 2)
-								Motor.motor(0, 0, 1)
-								Motor.motor(60, -60, 1)
-								Motor.motor(0, 0, 1)
-						elif(stuckMode[0] == 1):
-							# - Roll Over - #
-							print("Roll Overed")
-					t_takePhoto_start = time.time()
+						# --- Check Stuck Mode --- #
+						stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
+						if not (stuckMode[0] == 0):
+							Other.saveLog(stuckLog, time.time() - t_start, gpsData, stuckMode)
+							if(stuckMode[0] == 2):
+								# - Stuck -#
+								if(stuckMode[1] <= 1):
+									# - Stuck First Time - #
+									print("Stuck" + str(stuckMode))
+									Motor.motor(0, 0, 1)
+								elif(stuckMode[1] <= 3):
+									# - Stuck a few Time - #
+									print("Stuck" + str(stuckMode))
+								else:
+									# - Stuck Many Many Time - #
+									print("Stuck" + str(stuckMode))								
+									Motor.motor(-60, -60, 2)
+									Motor.motor(0, 0, 1)
+									Motor.motor(60, -60, 1)
+									Motor.motor(0, 0, 1)
+							elif(stuckMode[0] == 1):
+								# - Roll Over - #
+								print("Roll Overed")
+						t_takePhoto_start = time.time()
 
-				# --- Calculate disGoal and relAng and Motor Power --- #
-				nAng = RunningGPS.calNAng(ellipseScale, angOffset)			#Calculate Rover Angle
-				relAng[2] = relAng[1]
-				relAng[1] = relAng[0]
-				disGoal, angGoal, relAng[0] = RunningGPS.calGoal(nLat, nLon, gLat, gLon, nAng)
-				rAng = np.median(relAng)									#Calculate angle between Rover and Goal
-				mPL, mPR, mPS = RunningGPS.runMotorSpeed(rAng, kp, maxMP)	#Calculate Motor Power
+					# --- Calculate disGoal and relAng and Motor Power --- #
+					nAng = RunningGPS.calNAng(ellipseScale, angOffset)			#Calculate Rover Angle
+					relAng[2] = relAng[1]
+					relAng[1] = relAng[0]
+					disGoal, angGoal, relAng[0] = RunningGPS.calGoal(nLat, nLon, gLat, gLon, nAng)
+					rAng = np.median(relAng)									#Calculate angle between Rover and Goal
+					mPL, mPR, mPS = RunningGPS.runMotorSpeed(rAng, kp, maxMP)	#Calculate Motor Power
 
-				# --- Save Log --- #
-				print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
-				Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
-				gpsData = GPS.readGPS()
-				Motor.motor(mPL, mPR, 0.05, 1)
+					# --- Save Log --- #
+					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+					Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+					gpsData = GPS.readGPS()
+					Motor.motor(mPL, mPR, 0.05, 1)
 			Motor.motor(0, 0, 1)
 			print("Running Phase Finished")
 			IM920.Send("P7F")
