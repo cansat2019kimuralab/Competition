@@ -90,7 +90,7 @@ pcount = 0			#press count for land
 GAcount = 0
 gacount = 0			#GPSheight count for land
 mcount = 0			#Magnet count
-
+plcount = 0
 # --- variable for Judgement (release Thd)--- #
 luxreleaseThd = 100
 pressreleaseThd = 0.3
