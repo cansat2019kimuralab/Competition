@@ -123,7 +123,7 @@ ellipseScale = [-99.79881015576746, 171.782066653816, 1.586018339640338, 0.95215
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon = 35.923648, 139.912462	#Coordinates of Goal
+gLat, gLon = 35.918181, 139.907992	#Coordinates of Goal
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 rsLat, rsLon = 0.0, 0.0				#Coordinates of Running Start Position
 nAng = 0.0							#Direction of That time [deg]
@@ -187,7 +187,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 5
+	phaseChk = 7
 
 def transmitPhoto():
 	global t_start
@@ -491,27 +491,36 @@ if __name__ == "__main__":
 					print("10m from Start Position")
 					# --- Set Rover toward Goal --- #
 					relAngStatus = 0
-					while(relAngStatus <= 10):
+					for i in range(50):
 						nAng = RunningGPS.calNAng(ellipseScale, angOffset)			#Calculate Rover Angle
 						relAng[2] = relAng[1]
 						relAng[1] = relAng[0]
 						disGoal, angGoal, rAng = RunningGPS.calGoal(nLat, nLon, gLat, gLon, nAng)
-						Motor.motor(rAng * 0.6 / 1.8, -rAng * 0.6 / 1.8, 0.1, 1)
-						if(math.fabs(rAng) <= 10):
+						mPS = (-1) * rAng * 0.7 / 1.8
+						mPS = 60 if mPS > 60 else mPS
+						mPS = -60 if mPS < -60 else mPS
+						if(mPS > 0):
+							Motor.motor(mPS, 0, 0.1, 1)
+						else:
+							Motor.motor(0, -mPS, 0.1, 1)
+						if(math.fabs(rAng) <= 30):
 							relAngStatus = relAngStatus + 1
+							if(relAngStatus == 10):
+								break
 						else:
 							relAngStatus = 0
 						print(relAngStatus)
 
 					# --- Parachute Check --- #
 					paraExsist, paraArea, photoName = ParaDetection.ParaDetection(photopath, H_min, H_max, S_thd)
-					if(paraExsist):	# - Parachute Not Exsist - #
+					if(paraExsist == 0):	# - Parachute Not Exsist - #
 						print("Parachute is not found")
-						Motor.motor(60, 60, 10)
+						Motor.motor(60, 60, 5)
 					else:			# - Parachute Exsist - #
 						print("Parachute is found")
 						Motor.motor(-15, -15, 1)
-						Motor.motor(-60, -40, 5)
+						Motor.motor(-60, -40, 3)
+						Motor.motor(-60, -60, 1)
 					Motor.motor(0, 0, 1)
 				elif(disStart[0] > 10):
 					# --- Get GPS Data --- #
