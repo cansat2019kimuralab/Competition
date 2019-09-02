@@ -136,7 +136,7 @@ maxMP = 70							#Maximum Motor Power
 # --- variable for Goal Detection --- #
 mp_min = 10							#motor power for Low level
 mp_max = 60							#motor power fot High level
-mp_adj = -8							#adjust motor power
+mp_adj = 0							#adjust motor power
 adj_add = 8
 
 # --- variable of Log path --- #
@@ -185,7 +185,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 8
+	phaseChk = 5
 
 def transmitPhoto():
 	global t_start
