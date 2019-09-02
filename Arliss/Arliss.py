@@ -334,21 +334,21 @@ if __name__ == "__main__":
 			# --- Landing Judgement, "while" is for timeout --- #
 			while(time.time() - t_land_start <= t_land):
 				pressjudge, pcount = Land.pressdetect()
-				#gpsjudge, gacount = Land.gpsdetect()
+				gyrolandjudge, mcount = Land.bmxdetect()
 				print(pcount)
-				if pressjudge == 1: #and gpsdetect == 1:
-					Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Sensor", pressjudge, gpsjudge)
+				if pressjudge == 1 and gyrolandjudge == 1:
+					Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Sensor", pressjudge, gyrolandjudge )
 					print("Rover has Landed")
 					break
-				elif pressjudge == 0: #and gpsdetect == 0:
+				elif pressjudge == 0 and gyrolandjudge == 0:
 				    print("Descend now ")
-				#elif pressjudge == 1 : #or gpsjudge == 1:
-				#print("Landing JudgementNow")
+				elif pressjudge == 1  or gyrolandjudge == 1:
+				print("Landing JudgementNow")
 
-				elif pressjudge == 2: #when bme is dead
-					magnetlandjudge,mcount = Land.bmxdetect()
+				elif pressjudge == 2: #when i2c is dead
+					gyrolandjudge,mcount = Land.bmxdetect()
 					if magnetlandjudge == 1:
-						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by BMX", pressjudge, magnetlandjudge)
+						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by BMX", pressjudge, gyrolandjudge)
 						print("Rover has Emergency landed")
 						break
 					elif magnetlandjudge == 0:
