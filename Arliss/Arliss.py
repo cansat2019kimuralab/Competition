@@ -359,7 +359,7 @@ if __name__ == "__main__":
 				elif pressjudge == 1  or gyrolandjudge == 1:
 					print("Landing JudgementNow")
 
-				elif pressjudge == 2: #when i2c is dead
+				elif pressjudge == 2 or gyrolandjudge == 2: #when i2c is dead
 					photolandjudge, plcount = Land.photolanddetect(photolandThd)
 					if photolandjudge == 1:
 						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by camera", pressjudge, gyrolandjudge, photolandjudge)
