@@ -343,7 +343,7 @@ if __name__ == "__main__":
 				elif pressjudge == 0 and gyrolandjudge == 0:
 				    print("Descend now ")
 				elif pressjudge == 1  or gyrolandjudge == 1:
-				print("Landing JudgementNow")
+					print("Landing JudgementNow")
 
 				elif pressjudge == 2: #when i2c is dead
 					gyrolandjudge,mcount = Land.bmxdetect()
