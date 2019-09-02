@@ -75,7 +75,7 @@ timeout_parachute = 60
 timeout_takePhoto = 30		#time for taking photo timeout
 timeout_sendPhoto = 120		#time for sending photo timeout
 timeout_goalDete = 300
-timeout_stuck = 100
+timeout_stuck = 180
 
 # --- variable for storing sensor data --- #
 gpsData = [0.0,0.0,0.0,0.0,0.0]						#variable to store GPS data
@@ -123,7 +123,7 @@ ellipseScale = [-99.79881015576746, 171.782066653816, 1.586018339640338, 0.95215
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon = 35.92387, 139.911907	#Coordinates of Goal
+gLat, gLon = 35.923648, 139.912462	#Coordinates of Goal
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
@@ -134,9 +134,9 @@ stuckMode = [0, 0]					#Variable for Stuck
 maxMP = 70							#Maximum Motor Power
 
 # --- variable for Goal Detection --- #
-mp_min = 20							#motor power for Low level
+mp_min = 10							#motor power for Low level
 mp_max = 60							#motor power fot High level
-mp_adj = -3							#adjust motor power
+mp_adj = -8							#adjust motor power
 adj_add = 8
 
 # --- variable of Log path --- #
@@ -185,12 +185,14 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	#phaseChk = 7
+	phaseChk = 8
 
 def transmitPhoto():
 	global t_start
 	IM920.Strt("1") #fastmode
 	time.sleep(1)
+	Motor.motor(15, 15, 0.9)
+	Motor.motor(0, 0, 1)
 	takePhoto()
 	print("Send Photo")
 	#sendPhoto.sendPhoto(photoName)
@@ -257,12 +259,12 @@ def close():
 
 if __name__ == "__main__":
 	try:
-		print("Program Start  {0}".format(time.time()))
+		print("\nProgram Start  {0}".format(time.time()))
 		t_start = time.time()
 
 		#-----setup phase ---------#
 		setup()
-		print("Start Phase is {0}".format(phaseChk))
+		print("\n\nStart Phase is {0}".format(phaseChk))
 		if(phaseChk <= 1):
 			IM920.Send("P1S")
 			Other.saveLog(phaseLog, "1", "Program Started", time.time() - t_start)
@@ -271,7 +273,7 @@ if __name__ == "__main__":
 		# ------------------- Sleep Phase --------------------- #
 		if(phaseChk <= 2):
 			Other.saveLog(phaseLog, "2", "Sleep Phase Started", time.time() - t_start)
-			print("Sleep Phase Started  {0}".format(time.time() - t_start))
+			print("\nSleep Phase Started  {0}".format(time.time() - t_start))
 			IM920.Send("P2S")
 			pi.write(22, 0)			#IM920 Turn Off
 			print("IM920 Turn Off")
@@ -289,7 +291,7 @@ if __name__ == "__main__":
 		if(phaseChk <= 3):
 			Other.saveLog(phaseLog, "3", "Release Phase Started", time.time() - t_start)
 			t_release_start = time.time()
-			print("Releasing Phase Started  {0}".format(time.time() - t_start))
+			print("\nReleasing Phase Started  {0}".format(time.time() - t_start))
 			#IM920.Send("P3S")
 
 			# --- Release Judgement, "while" is for timeout --- #
@@ -327,7 +329,7 @@ if __name__ == "__main__":
 		# ------------------- Landing Phase ------------------- #
 		if(phaseChk <= 4):
 			Other.saveLog(phaseLog, "4", "Landing Phase Started", time.time() - t_start)
-			print("Landing Phase Started  {0}".format(time.time() - t_start))
+			print("\nLanding Phase Started  {0}".format(time.time() - t_start))
 			IM920.Send("P4S")
 			t_land_start = time.time()
 
@@ -367,7 +369,7 @@ if __name__ == "__main__":
 		# ------------------- Melting Phase ------------------- #
 		if(phaseChk <= 5):
 			Other.saveLog(phaseLog,"5", "Melting Phase Started", time.time() - t_start)
-			print("Melting Phase Started")
+			print("\nMelting Phase Started")
 			IM920.Send("P5S")
 			Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting Start")
 			for i in range(3):
@@ -383,7 +385,7 @@ if __name__ == "__main__":
 			Other.saveLog(phaseLog, "6", "ParaAvoidance Phase Started", time.time() - t_start)
 			IM920.Send("P6S")
 
-			print("ParaAvoidance Phase Started")
+			print("\nParaAvoidance Phase Started")
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Start")
 
 			# --- Parachute Judge --- #
@@ -406,6 +408,8 @@ if __name__ == "__main__":
 				Motor.motor(70, -70, 1)
 				Motor.motor(0, 0, 1)
 			'''
+			Motor.motor(-20, -20, 0.9)
+			Motor.motor(0, 0, 0,9)
 			Motor.motor(15,15, 0.9)
 			Motor.motor(0, 0, 0.9)
 			t_paraDete_start = time.time()
@@ -457,7 +461,7 @@ if __name__ == "__main__":
 		# ------------------- Running Phase ------------------- #
 		if(phaseChk <= 7):
 			Other.saveLog(phaseLog, "7", "Running Phase Started", time.time() - t_start)
-			print("Running Phase Started")
+			print("\nRunning Phase Started")
 			IM920.Send("P7S")
 
 			# --- Read GPS Data --- #
@@ -472,10 +476,10 @@ if __name__ == "__main__":
 			while(disGoal >= 5):
 				# --- Get GPS Data --- #
 				if(disGoal <= 15):
-					kp = 0.9
+					kp = 0.8
 					maxMP = 40
 				else:
-					kp = 0.5
+					kp = 0.2
 					maxMP = 70
 
 				if(RunningGPS.checkGPSstatus(gpsData)):
@@ -523,7 +527,7 @@ if __name__ == "__main__":
 								# - Stuck First Time - #
 								print("Stuck" + str(stuckMode))
 								Motor.motor(0, 0, 1)
-							elif(stuckoMode[1] <= 3):
+							elif(stuckMode[1] <= 3):
 								# - Stuck a few Time - #
 								print("Stuck" + str(stuckMode))
 							else:
@@ -558,7 +562,7 @@ if __name__ == "__main__":
 		# ------------------- GoalDetection Phase ------------------- #
 		if(phaseChk <= 8):
 			Other.saveLog(phaseLog, "8", "GoalDetection Phase Started", time.time() - t_start)
-			print("Goal Detection Phase Started")
+			print("\nGoal Detection Phase Started")
 			IM920.Send("P8S")
 
 			# --- Transmit Image --- #
@@ -571,7 +575,7 @@ if __name__ == "__main__":
 					break
 				gpsdata = GPS.readGPS()
 				goalBufFlug = goalFlug
-				"""				
+								
 				# --- Stuck Detection --- #
 				if time.time() - t_stuckDete_start > timeout_stuck:
 					stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
@@ -585,10 +589,10 @@ if __name__ == "__main__":
 						Motor.motor(80, -80, 3, 1)
 						Motor.motor(0, 0, 2)
 					t_stuckDete_start = time.time()
-				"""
+				
 				# --- get information --- #
 				Motor.motor(0, 0, 2)
-				Motor.motor(15,15, 0.9)
+				Motor.motor(10,10, 0.6)
 				Motor.motor(0, 0, 1.0)
 				goalFlug, goalArea, goalGAP, photoName = goal_detection.GoalDetection(photopath, H_min, H_max, S_thd, goalthd)
 				print("flug", goalFlug, "area", goalArea, "GAP", goalGAP)
@@ -651,7 +655,7 @@ if __name__ == "__main__":
 		# ------------------- Sending Photo Phase ------------------- #
 		if(phaseChk <= 9):
 			Other.saveLog(phaseLog, "9", "Sending Photo Phase Started", time.time() - t_start)
-			print("Sending Photo Phase Started")
+			print("\nSending Photo Phase Started")
 			IM920.Send("P9S")
 			for i in range(3):
 				IM920.Send("P9D")
@@ -662,7 +666,7 @@ if __name__ == "__main__":
 			IM920.Send("P9F")
 
 		# ------------------- Program Finish ------------------- #
-		print("Program Finished")
+		print("\nProgram Finished")
 		IM920.Send("P10")
 		Other.saveLog(phaseLog, "10", "Program Finished", time.time() - t_start)
 
