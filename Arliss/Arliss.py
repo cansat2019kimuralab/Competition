@@ -101,12 +101,15 @@ presslandThd = 0.1
 gyrolandThd = 20
 photolandThd  =0.98
 
-luxjudge = 0		#for release
-pressjudge = 0		#for release and land
-magnetlandjudge=0   #for emergency landjudge
-gpsjudge = 0		#for land
-stuckFlug = 0
+luxjreleaseudge = 0		#for release
+pressreleasejudge = 0		#for release 
+photoreleasejudge = 0 #for release
+presslandjudge = 0  # for land
+gyrolandjudge=0   #for land
+photolandjudge = 0 # for land
+gpsjudge = 0		#(for land)
 
+stuckFlug = 0
 stuckThd = 100
 PstuckCount = 30
 stuckCount = 100
@@ -309,14 +312,14 @@ if __name__ == "__main__":
 
 			# --- Release Judgement, "while" is for timeout --- #
 			while (time.time() - t_release_start <= t_release):
-				luxjudge,lcount = Release.luxdetect(luxreleaseThd)
-				pressjudge,acount = Release.pressdetect(pressreleaseThd)
+				luxreleasejudge,lcount = Release.luxdetect(luxreleaseThd)
+				pressreleasejudge,acount = Release.pressdetect(pressreleaseThd)
 				t1 = time.time()
-				if luxjudge == 1 or pressjudge == 1:
-					Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Sensor", luxjudge, pressjudge)
+				if luxreleasejudge == 1 or pressreleasejudge == 1:
+					Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Sensor", luxreleasejudge, pressreleasejudge, photoreleasejudge)
 					print("Rover has released")
 					break
-				elif luxjudge == 2 or pressjudge == 2: #when i2c is dead
+				elif luxreleasejudge == 2 or pressreleasejudge == 2: #when i2c is dead
 					photoreleasejudge,fcount=Release.photoreleasedetect(photoName,photoreleaseThd)
 					if photoreleasejudge == 1:
 						print("Rover has release by photojudge")
@@ -329,7 +332,7 @@ if __name__ == "__main__":
 				print("l"+str(lcount)+"  a"+ str(acount)+"  f"+str(fcount))
 				# --- Save Log and Take Photo --- #
 				gpsData = GPS.readGPS()
-				Other.saveLog(releaseLog, time.time() - t_start, acount, lcount, fcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
+				Other.saveLog(releaseLog, time.time() - t_start, lcount, acount, fcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
 				takePhoto()
 				#IM920.Send("P3D")
 			else:
@@ -348,25 +351,24 @@ if __name__ == "__main__":
 
 			# --- Landing Judgement, "while" is for timeout --- #
 			while(time.time() - t_land_start <= t_land):
-				pressjudge, pcount = Land.pressdetect(presslandThd)
+				presslandjudge, pcount = Land.pressdetect(presslandThd)
 				gyrolandjudge, mcount = Land.bmxdetect(gyrolandThd)
-				if pressjudge == 1 and gyrolandjudge == 1:
-					Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Sensor", pressjudge, gyrolandjudge )
+				if presslandjudge == 1 and gyrolandjudge == 1:
+					Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Sensor", presslandjudge, gyrolandjudge )
 					print("Rover has Landed")
 					break
-				elif pressjudge == 0 and gyrolandjudge == 0:
-				    print("Descend now ")
-				elif pressjudge == 1  or gyrolandjudge == 1:
-					print("Landing JudgementNow")
 
-				elif pressjudge == 2 or gyrolandjudge == 2: #when i2c is dead
+				elif presslandjudge == 2 or gyrolandjudge == 2: #when i2c is dead
 					photolandjudge, plcount = Land.photolanddetect(photolandThd)
 					if photolandjudge == 1:
-						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by camera", pressjudge, gyrolandjudge, photolandjudge)
+						Other.saveLog(landingLog, time.time() - t_start, "Land Judged by camera", presslandjudge, gyrolandjudge, photolandjudge)
 						print("Rover has Emergency landed")
 						break
 					elif photolandjudge == 0:
 						print("emergency Descend now")
+				else:
+					print("Land judge now")
+
 				print("p"+str(pcount)+"  m"+str(mcount)+" pl"+str(plcount))
 				# --- Save Log and Take Photo--- #
 				for i in range(3):
