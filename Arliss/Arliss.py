@@ -174,7 +174,7 @@ errorLog = 			"/home/pi/log/erroLog.txt"
 
 photopath = 		"/home/pi/photo/photo"
 photoName =			""
-
+airphoto =          ""
 fileCal = 			""	#File Path for Calibration Log
 
 pi = pigpio.pi()	#object to set pigpio
@@ -204,7 +204,7 @@ def setup():
 	#if it is debug
 	phaseChk = 5
 
-def transmitPhoto():
+def transmitPhoto(photoName):
 	global t_start
 	IM920.Strt("1") #fastmode
 	time.sleep(1)
@@ -212,7 +212,7 @@ def transmitPhoto():
 	Motor.motor(0, 0, 1)
 	takePhoto()
 	print("Send Photo")
-	#sendPhoto.sendPhoto(photoName)
+	sendPhoto.sendPhoto(photoName)  #if it is ordinally
 	print("Send Photo Finished")
 	Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
 	IM920.Strt("2")  #distancemode
@@ -320,6 +320,7 @@ if __name__ == "__main__":
 				if luxreleasejudge == 1 or pressreleasejudge == 1:
 					Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Sensor", luxreleasejudge, pressreleasejudge, photoreleasejudge)
 					print("Rover has released")
+					airphoto = Capture.Capture(photopath)
 					break
 				elif luxreleasejudge == 2 or pressreleasejudge == 2: #when i2c is dead
 					photoreleasejudge,fcount=Release.photoreleasedetect(photoName,photoreleaseThd)
@@ -570,7 +571,7 @@ if __name__ == "__main__":
 						Motor.motor(0, 0, 2)
 
 						# --- Send Photo --- #
-						transmitPhoto()
+						transmitPhoto(airphoto)
 
 						#Every [timeout_calibratoin] second,  Calibrate
 						print("Calibration")
@@ -642,7 +643,7 @@ if __name__ == "__main__":
 			IM920.Send("P8S")
 
 			# --- Transmit Image --- #
-			transmitPhoto()
+			transmitPhoto(photoName)
 
 			t_goalDete_start = time.time()
 			t_stuckDete_start = time.time()
@@ -739,7 +740,7 @@ if __name__ == "__main__":
 			IM920.Send("P9S")
 			for i in range(3):
 				IM920.Send("P9D")
-				transmitPhoto()
+				transmitPhoto(photoName)
 				time.sleep(1)
 				IM920.Send("P9D")
 			print("Sending Photo Phase Finished")
