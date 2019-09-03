@@ -379,7 +379,7 @@ if __name__ == "__main__":
 					takePhoto()
 				if RunningGPS.checkGPSstatus(gpsData) == 1:
 					nLat = gpsData[1]
-					nLonf = gpsData[2]
+					nLon = gpsData[2]
 				IM920.Send("G	"+str(nLat)+"	"+str(nLon))
 				IM920.Send("P4	"+str(pcount)+"	"+str(mcount))
 			else:
