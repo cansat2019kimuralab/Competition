@@ -138,7 +138,7 @@ ellipseScale = [-99.79881015576746, 171.782066653816, 1.586018339640338, 0.95215
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon = 35.924043, 139.91231	#Coordinates of Goal
+gLat, gLon = 35.918181, 139.907992	#Coordinates of Goal
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 rsLat, rsLon = 0.0, 0.0				#Coordinates of Running Start Position
 nAng = 0.0							#Direction of That time [deg]
@@ -149,6 +149,7 @@ kp = 0.5							#Proportional Gain
 stuckMode = [0, 0]					#Variable for Stuck
 maxMP = 70							#Maximum Motor Power
 relAngStatus = 0					#Used for ParaExist
+startPosStatus = 0
 
 # --- variable for Goal Detection --- #
 mp_min = 15							#motor power for Low level
@@ -171,6 +172,7 @@ calibrationLog = 	"/home/pi/log/calibrationLog"
 sendPhotoLog = 		"/home/pi/log/sendPhotoLog.txt"
 stuckLog = 			"/home/pi/log/stuckLog.txt"
 errorLog = 			"/home/pi/log/erroLog.txt"
+positionLog = 		"/home/pi/log/positionLog.txt"
 
 photopath = 		"/home/pi/photo/photo"
 photoName =			""
@@ -182,6 +184,7 @@ pi = pigpio.pi()	#object to set pigpio
 
 def setup():
 	global phaseChk
+	global startPosStatus
 	pi.set_mode(17,pigpio.OUTPUT)
 	pi.set_mode(22,pigpio.OUTPUT)
 	pi.write(22,1)					#IM920	Turn On
@@ -203,6 +206,18 @@ def setup():
 		phaseChk = 0
 	#if it is debug
 	#phaseChk = 8
+	if phaseChk == 0:
+		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
+		startPosStatus = 0
+	else:
+		if(Other.positionCheck(positionLog) == [0.0, 0.0]):
+			print("Not Logged Start Position")
+			startPosStatus = 1
+		else:
+			rsLat, rsLon = Other.positionCheck(positionLog)
+			print(rsLat, rsLon)
+			startPosStatus = 0
+	#print(startPosStatus)
 
 def transmitPhoto():
 	global t_start
@@ -414,16 +429,19 @@ if __name__ == "__main__":
 			IM920.Send("P5F")
 
 		# ------------------- ParaAvoidance Phase ------------------- #
+		print("Start Pos")
+		print(startPosStatus)
+		if(startPosStatus == 1):
+			readGPSdata()
+			rsLat = gpsData[1]
+			rsLon = gpsData[2]
+			Other.saveLog(positionLog, "Start", rsLat, rsLon, "\t")
 		if(phaseChk <= 6):
 			Other.saveLog(phaseLog, "6", "ParaAvoidance Phase Started", time.time() - t_start)
 			IM920.Send("P6S")
 
 			print("\nParaAvoidance Phase Started")
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Start")
-
-			readGPSdata()
-			rsLat = gpsData[1]
-			rsLon = gpsData[2]
 
 			# --- Parachute Judge --- #
 			print("START: Parachute Cover Judgement")
