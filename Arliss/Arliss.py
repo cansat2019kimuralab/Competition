@@ -430,6 +430,7 @@ if __name__ == "__main__":
 			Motor.motor(15,15, 0.9)
 			Motor.motor(0, 0, 0.9)
 
+			# --- Stuck Detection --- #
 			print("START: stuck")
 			for i in range(20):
 				BMX055data = BMX055.bmx055_read()
@@ -440,7 +441,7 @@ if __name__ == "__main__":
 						break
 				else:
 					paracount = 0
-
+			# --- Stuck Escape --- #
 			t_paraDete_start = time.time()
 			while  paracount > 4:
 				if time.time() - t_paraDete_start > timeout_parachute:
@@ -475,7 +476,7 @@ if __name__ == "__main__":
 				Motor.motor(15, 15, 0.9)
 				Motor.motor(0, 0, 0.9)
 				paraExsist, paraArea, photoName = ParaDetection.ParaDetection(photopath, H_min, H_max, S_thd)
-
+				# --- infront of me --- #
 				if paraExsist == 1:
 					Motor.motor(-mp_max, -mp_max, 5)
 					Motor.motor(0, 0, 1)
@@ -483,13 +484,13 @@ if __name__ == "__main__":
 					Motor.motor(0 ,0, 1)
 					Motor.motor(mp_max, mp_min, 1.0)
 					Motor.motor(0, 0, 1)
-
+				# --- infront nothing --- #
 				if paraExsist == 0:
 					Motor.motor(mp_max, mp_max, 5)
 					Motor.motor(0 ,0, 1)
 					Motor.motor(-mp_max, -mp_max, 0.5)
 					Motor.motor(0 ,0, 1)
-
+				# --- broken camera --- #
 				if paraExsist == -1:
 					Motor.motor(mp_max, mp_max, 5)
 					Motor.motor(0 ,0, 1)
@@ -736,6 +737,7 @@ if __name__ == "__main__":
 							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.6)
 							Motor.motor(0, 0, 0.8)
 							bomb = 0
+				# --- broken camera --- #
 				elif goalFlug > 105:
 					goalFlug = 0
 					goalBufFlug = 0
