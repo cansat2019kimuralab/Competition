@@ -239,6 +239,7 @@ def calibration():
 			calData = ellipseScale
 			Motor.motor(0, 0, 1)
 			Motor.motor(-60, -60, 2)
+			Other.saveLog(stuckLog, time.time() - t_start, GPS.readGPS(), 3, 0)
 			Other.saveLog(fileCal, time.time() - t_start, "Calibration Failed")
 			break
 
@@ -429,10 +430,16 @@ if __name__ == "__main__":
 			while  paracount > 4:
 				if time.time() - t_paraDete_start > timeout_parachute:
 					break
-				Motor.motor(50, 50, 1.2)
-				Motor.motor(0, 0, 1.8)
-				Motor.motor(-50, -50, 1.2)
-				Motor.motor(0, 0, 1.8)
+
+				Motor.motor(70, 70, 0.2, 1)
+				Motor.motor(0, 0, 2.0)
+				Motor.motor(-70, -70, 0.2, 1)
+				Motor.motor(0, 0, 2.0)
+				Motor.motor(-60, 60, 0.4)
+				Motor.motor(0, 0, 2.0)
+				Motor.motor(60, -60, 0.4)
+				Motor.motor(0, 0, 2.0)
+
 				Motor.motor(15, 15, 0.9)
 				Motor.motor(0, 0, 2)
 				paracount = 0
@@ -497,12 +504,20 @@ if __name__ == "__main__":
 			t_calib_origin = time.time() - timeout_calibration - 20
 			t_takePhoto_start = time.time()
 			while(disGoal >= 5):
+				# --- Get GPS Data --- #
+				if(RunningGPS.checkGPSstatus(gpsData)):
+					nLat = gpsData[1]
+					nLon = gpsData[2]
+					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+					IM920.Send("G" + str(nLat) + "	" + str(nLon))
+					IM920.Send("D" + str(disGoal))
+
 				# --- Change Gain --- #
 				if(disGoal <= 15):
 					kp = 0.8
 					maxMP = 40
 				else:
-					kp = 0.2
+					kp = 0.5
 					maxMP = 70
 
 				disStart = RunningGPS.calGoal(nLat, nLon, rsLat, rsLon, nAng)
@@ -515,7 +530,7 @@ if __name__ == "__main__":
 						relAng[2] = relAng[1]
 						relAng[1] = relAng[0]
 						disGoal, angGoal, rAng = RunningGPS.calGoal(nLat, nLon, gLat, gLon, nAng)
-						mPS = (-1) * rAng * 0.7 / 1.8
+						mPS = (-1) * rAng * 0.6 / 1.8
 						mPS = 60 if mPS > 60 else mPS
 						mPS = -60 if mPS < -60 else mPS
 						if(mPS > 0):
@@ -542,13 +557,6 @@ if __name__ == "__main__":
 						Motor.motor(-60, -60, 1)
 					Motor.motor(0, 0, 1)
 				elif(disStart[0] > 10):
-					# --- Get GPS Data --- #
-					if(RunningGPS.checkGPSstatus(gpsData)):
-						nLat = gpsData[1]
-						nLon = gpsData[2]
-						print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
-						IM920.Send("G" + str(nLat) + "	" + str(nLon))
-
 					# --- Calibration --- #
 					if(time.time() - t_calib_origin > timeout_calibration):
 						IM920.Send("P7C")
@@ -636,7 +644,7 @@ if __name__ == "__main__":
 					break
 				gpsdata = GPS.readGPS()
 				goalBufFlug = goalFlug
-								
+
 				# --- Stuck Detection --- #
 				if time.time() - t_stuckDete_start > timeout_stuck:
 					t_stuckDete_start = time.time()
@@ -654,7 +662,7 @@ if __name__ == "__main__":
 						Motor.motor(0, 0, 2)
 						stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
 					t_stuckDete_start = time.time()
-				
+
 				# --- get information --- #
 				Motor.motor(0, 0, 2)
 				Motor.motor(10,10, 0.6)
