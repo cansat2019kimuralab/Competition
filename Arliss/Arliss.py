@@ -222,9 +222,9 @@ def takePhoto():
 	global photoName
 	photo = ""
 	photo = Capture.Capture(photopath)
-	Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 	if not(photo == "Null"):
 		photoName = photo
+	Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 
 def calibration():
 	global ellipseScale
@@ -235,6 +235,7 @@ def calibration():
 	fileCal = Other.fileName(calibrationLog, "txt")
 
 	print("Calibration Start")
+	IM920.Send("P7C")
 	Motor.motor(0, 30, 1)
 	t_cal_start = time.time()
 	while(math.fabs(roll) <= 600):
@@ -245,7 +246,6 @@ def calibration():
 			Other.saveLog(stuckLog, time.time() - t_start, GPS.readGPS(), 3, 0)
 			Other.saveLog(fileCal, time.time() - t_start, "Calibration Failed")
 			break
-
 		mPL, mPR, mPS, bmx055data = pidControl.pidSpin(300, 1.0, 1.1, 0.2, dt)
 		with open(fileCal, 'a') as f:
 			for i in range(6, 8):
@@ -257,15 +257,26 @@ def calibration():
 		Motor.motor(mPL, mPR, dt, 1)
 	else:
 		Motor.motor(0, 0, 1)
-
 		calData = Calibration.Calibration(fileCal)
-		Other.saveLog(fileCal, ellipseScale)
+		Other.saveLog(fileCal, calData)
 		Other.saveLog(fileCal, time.time() - t_start)
 
 	Motor.motor(0, 0, 1)
-
 	print("Calibration Finished")
 	return calData
+
+def readGPSdata():
+	global gpsData
+	global nLat, nLon
+	
+	print("Read GPS Data")
+	gpsData = GPS.readGPS()
+	while(not RunningGPS.checkGPSstatus(gpsData)):
+		gpsData = GPS.readGPS()
+		time.sleep(1)
+	else:
+		nLat = gpsData[1]
+		nLon = gpsData[2]
 
 def close():
 	GPS.closeGPS()
@@ -390,6 +401,7 @@ if __name__ == "__main__":
 			Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting Start")
 			for i in range(3):
 				print("Melting " + str(i))
+				IM920.Send("P5	" + str(i))
 				Melting.Melting(t_melt)
 				time.sleep(1)
 				Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting" + str(i))
@@ -404,16 +416,13 @@ if __name__ == "__main__":
 			print("\nParaAvoidance Phase Started")
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Start")
 
-			print("Read GPS Data")
-			gpsData = GPS.readGPS()
-			while(not RunningGPS.checkGPSstatus(gpsData)):
-				gpsData = GPS.readGPS()
-				time.sleep(1)
+			readGPSdata()
 			rsLat = gpsData[1]
 			rsLon = gpsData[2]
 
 			# --- Parachute Judge --- #
-			print("START: Judge covered by Parachute")
+			print("START: Parachute Cover Judgement")
+			IM920.Send("P6PJ")
 			t_paraDete_start = time.time()
 			while time.time() - t_paraDete_start < timeout_parachute:
 				paraLuxflug, paraLux = ParaDetection.ParaJudge(LuxThd)
@@ -425,7 +434,8 @@ if __name__ == "__main__":
 			Motor.motor(15,15, 0.9)
 			Motor.motor(0, 0, 0.9)
 
-			print("START: stuck")
+			print("START: Stuck Detection")
+			IM920.Send("P6SD")
 			for i in range(20):
 				BMX055data = BMX055.bmx055_read()
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), BMX055data)
@@ -464,8 +474,9 @@ if __name__ == "__main__":
 						paracount = 0
 
 			# --- Parachute Avoidance --- #
-			print("START: Parachute avoidance")
+			print("START: Parachute Avoidance")
 			for i in range(2):	#Avoid Parachute two times
+				IM920.Send("P6PA" + str(i))
 				Motor.motor(0, 0, 2)
 				Motor.motor(15, 15, 0.9)
 				Motor.motor(0, 0, 0.9)
@@ -503,27 +514,24 @@ if __name__ == "__main__":
 			IM920.Send("P7S")
 
 			# --- Read GPS Data --- #
-			print("Read GPS Data")
-			while(not RunningGPS.checkGPSstatus(gpsData)):
-				gpsData = GPS.readGPS()
-				time.sleep(1)
-			#stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
+			readGPSdata()
 
-			#t_calib_origin = time.time() - timeout_calibration - 20
-	
-			t_takePhoto_start = time.time()
+			# ---  Calibration --- #
 			print("Calibration")
 			ellipseScale = calibration()
+
+			t_takePhoto_start = time.time()
 			t_calib_origin = time.time()
 
 			while(disGoal >= 5):
-				# --- Get GPS Data --- #
+				# --- Check GPS Data --- #
 				if(RunningGPS.checkGPSstatus(gpsData)):
 					nLat = gpsData[1]
 					nLon = gpsData[2]
 					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					IM920.Send("G" + str(nLat) + "	" + str(nLon))
 					IM920.Send("D" + str(disGoal))
+					IM920.Send("A" + str(nAng))
 
 				# --- Change Gain --- #
 				if(disGoal <= 15):
@@ -536,6 +544,7 @@ if __name__ == "__main__":
 				disStart = RunningGPS.calGoal(nLat, nLon, rsLat, rsLon, nAng)
 				if(disStart[0] <= 10):
 					print("10m from Start Position", disStart)
+					IM920.Send("P7P")
 					# --- Set Rover toward Goal --- #
 					relAngStatus = 0
 					for i in range(50):
@@ -561,29 +570,25 @@ if __name__ == "__main__":
 					# --- Parachute Check --- #
 					paraExsist, paraArea, photoName = ParaDetection.ParaDetection(photopath, H_min, H_max, S_thd)
 					if(paraExsist == 0):	# - Parachute Not Exsist - #
+						IM920.Send("P7PN")
 						print("Parachute is not found")
 						Motor.motor(60, 60, 5)
 					else:			# - Parachute Exsist - #
 						print("Parachute is found")
+						IM920.Send("P7PE")
 						Motor.motor(-15, -15, 1)
 						Motor.motor(-60, -40, 3)
 						Motor.motor(-60, -60, 1)
 					Motor.motor(0, 0, 1)
-					gpsData = GPS.readGPS()
-					while(not RunningGPS.checkGPSstatus(gpsData)):
-						gpsData = GPS.readGPS()
-						time.sleep(1)
 
+					# --- Get GPS Data --- #
+					readGPSdata()
 				elif(disStart[0] > 10):
 					# --- Calibration --- #
 					if(time.time() - t_calib_origin > timeout_calibration):
-						IM920.Send("P7C")
+						# --- Send Photo and Calibration--- #
 						Motor.motor(0, 0, 2)
-
-						# --- Send Photo --- #
 						transmitPhoto()
-
-						#Every [timeout_calibratoin] second,  Calibrate
 						print("Calibration")
 						ellipseScale = calibration()
 						t_calib_origin = time.time()
@@ -599,34 +604,39 @@ if __name__ == "__main__":
 						takePhoto()
 
 						# --- Read GPS Data --- #
-						gpsData = GPS.readGPS()
-						while(not RunningGPS.checkGPSstatus(gpsData)):
-							gpsData = GPS.readGPS()
-							time.sleep(1)
+						readGPSdata()
 
 						# --- Check Stuck Mode --- #
 						stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
 						if not (stuckMode[0] == 0):
 							Other.saveLog(stuckLog, time.time() - t_start, gpsData, stuckMode)
 							if(stuckMode[0] == 2):
+								IM920.Send("P7K" + str(stuckMode[0]) + "	" + str(stuckMode[1]))
 								# - Stuck -#
-								if(stuckMode[1] <= 1):
-									# - Stuck First Time - #
+								if(stuckMode[1] <= 3):
+									# - Stuck- #
 									print("Stuck" + str(stuckMode))
+									Motor.motor(80, 80, 4)
+									Motor.motor(60, 60, 1)
+								elif(stuckMode[1] <= 5):
+									# - Stuck Many Time - #
+									print("Stuck" + str(stuckMode))
+									Motor.motor(-60, -60, 3)
 									Motor.motor(0, 0, 1)
-								elif(stuckMode[1] <= 3):
-									# - Stuck a few Time - #
-									print("Stuck" + str(stuckMode))
+									Motor.motor(60, -60, 5)
+									Motor.motor(0, 0, 1) 
 								else:
 									# - Stuck Many Many Time - #
 									print("Stuck" + str(stuckMode))								
-									Motor.motor(-60, -60, 2)
+									Motor.motor(-80, -80, 5)
 									Motor.motor(0, 0, 1)
-									Motor.motor(60, -60, 1)
+									Motor.motor(80, -80, 3)
 									Motor.motor(0, 0, 1)
+									Motor.motor(80, 80, 5)
 							elif(stuckMode[0] == 1):
 								# - Roll Over - #
 								print("Roll Overed")
+								IM920.Send("P7R")
 						t_takePhoto_start = time.time()
 
 					# --- Calculate disGoal and relAng and Motor Power --- #
@@ -681,12 +691,14 @@ if __name__ == "__main__":
 						stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
 					t_stuckDete_start = time.time()
 
-				# --- get information --- #
+				# --- Get information --- #
 				Motor.motor(0, 0, 2)
 				Motor.motor(15,15, 0.6)
 				Motor.motor(0, 0, 1.0)
 				goalFlug, goalArea, goalGAP, photoName = goal_detection.GoalDetection(photopath, H_min, H_max, S_thd, goalthd)
 				print("flug", goalFlug, "area", goalArea, "GAP", goalGAP)
+				IM920.Send("P8GF" + str(goalFlug))
+				IM920.Send("P8GA" + str(goalArea))
 				#print("bomb",bomb)
 
 				# --- goal --- #
@@ -775,5 +787,5 @@ if __name__ == "__main__":
 		Other.saveLog(errorLog, traceback.format_exc())
 		Other.saveLog(errorLog, "\n")
 		IM920.Send("EO")
-		os.system('sudo reboot')
+		#os.system('sudo reboot')
 		close()
