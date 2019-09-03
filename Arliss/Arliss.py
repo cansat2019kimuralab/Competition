@@ -428,6 +428,8 @@ if __name__ == "__main__":
 				Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting" + str(i))
 			Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting Finished")
 			IM920.Send("P5F")
+			transmitphoto(airphoto)
+			transmitphoto()
 
 		# ------------------- ParaAvoidance Phase ------------------- #
 		print("Start Pos")
