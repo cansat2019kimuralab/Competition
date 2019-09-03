@@ -121,7 +121,7 @@ goalFlug = -1		#variable for GoalDetection		-1:Not Detect, 0:Goal, 1:Detect
 goalBufFlug = -1	#variable for GoalDetection buf
 goalArea = 0		#variable for goal area
 goalGAP = -1		#variable for goal gap
-goalthd = 10000		#variable for goal area thd
+goalthd = 12000		#variable for goal area thd
 H_min = 200			#Hue minimam
 H_max = 10			#Hue maximam
 S_thd = 130			#Saturation threshold
@@ -138,7 +138,7 @@ ellipseScale = [-99.79881015576746, 171.782066653816, 1.586018339640338, 0.95215
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon = 35.918181, 139.907992	#Coordinates of Goal
+gLat, gLon = 35.924043, 139.91231	#Coordinates of Goal
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 rsLat, rsLon = 0.0, 0.0				#Coordinates of Running Start Position
 nAng = 0.0							#Direction of That time [deg]
@@ -151,10 +151,10 @@ maxMP = 70							#Maximum Motor Power
 relAngStatus = 0					#Used for ParaExist
 
 # --- variable for Goal Detection --- #
-mp_min = 10							#motor power for Low level
-mp_max = 60							#motor power fot High level
-mp_adj = 0							#adjust motor power
-adj_add = 8
+mp_min = 15							#motor power for Low level
+mp_max = 65							#motor power fot High level
+mp_adj = -1							#adjust motor power
+adj_add = 10
 
 # --- variable of Log path --- #
 phaseLog =			"/home/pi/log/phaseLog.txt"
@@ -202,7 +202,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 5
+	#phaseChk = 8
 
 def transmitPhoto():
 	global t_start
@@ -404,6 +404,14 @@ if __name__ == "__main__":
 			print("\nParaAvoidance Phase Started")
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Start")
 
+			print("Read GPS Data")
+			gpsData = GPS.readGPS()
+			while(not RunningGPS.checkGPSstatus(gpsData)):
+				gpsData = GPS.readGPS()
+				time.sleep(1)
+			rsLat = gpsData[1]
+			rsLon = gpsData[2]
+
 			# --- Parachute Judge --- #
 			print("START: Judge covered by Parachute")
 			t_paraDete_start = time.time()
@@ -501,10 +509,13 @@ if __name__ == "__main__":
 				time.sleep(1)
 			#stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
 
-			rsLat = gpsData[1]
-			rsLon = gpsData[2]
-			t_calib_origin = time.time() - timeout_calibration - 20
+			#t_calib_origin = time.time() - timeout_calibration - 20
+	
 			t_takePhoto_start = time.time()
+			print("Calibration")
+			ellipseScale = calibration()
+			t_calib_origin = time.time()
+
 			while(disGoal >= 5):
 				# --- Get GPS Data --- #
 				if(RunningGPS.checkGPSstatus(gpsData)):
@@ -524,7 +535,7 @@ if __name__ == "__main__":
 
 				disStart = RunningGPS.calGoal(nLat, nLon, rsLat, rsLon, nAng)
 				if(disStart[0] <= 10):
-					print("10m from Start Position")
+					print("10m from Start Position", disStart)
 					# --- Set Rover toward Goal --- #
 					relAngStatus = 0
 					for i in range(50):
@@ -532,7 +543,7 @@ if __name__ == "__main__":
 						relAng[2] = relAng[1]
 						relAng[1] = relAng[0]
 						disGoal, angGoal, rAng = RunningGPS.calGoal(nLat, nLon, gLat, gLon, nAng)
-						mPS = (-1) * rAng * 0.6 / 1.8
+						mPS = (-1) * rAng * 0.8/ 1.8
 						mPS = 60 if mPS > 60 else mPS
 						mPS = -60 if mPS < -60 else mPS
 						if(mPS > 0):
@@ -558,6 +569,11 @@ if __name__ == "__main__":
 						Motor.motor(-60, -40, 3)
 						Motor.motor(-60, -60, 1)
 					Motor.motor(0, 0, 1)
+					gpsData = GPS.readGPS()
+					while(not RunningGPS.checkGPSstatus(gpsData)):
+						gpsData = GPS.readGPS()
+						time.sleep(1)
+
 				elif(disStart[0] > 10):
 					# --- Calibration --- #
 					if(time.time() - t_calib_origin > timeout_calibration):
@@ -667,7 +683,7 @@ if __name__ == "__main__":
 
 				# --- get information --- #
 				Motor.motor(0, 0, 2)
-				Motor.motor(10,10, 0.6)
+				Motor.motor(15,15, 0.6)
 				Motor.motor(0, 0, 1.0)
 				goalFlug, goalArea, goalGAP, photoName = goal_detection.GoalDetection(photopath, H_min, H_max, S_thd, goalthd)
 				print("flug", goalFlug, "area", goalArea, "GAP", goalGAP)
@@ -675,30 +691,30 @@ if __name__ == "__main__":
 
 				# --- goal --- #
 				if goalFlug == 0:
-					Motor.motor(30, 30 + mp_adj, 0.4)
+					Motor.motor(40, 40 + mp_adj, 0.4)
 					Motor.motor(0, 0, 0.8)
 
 				# --- not detect --- #
 				elif goalFlug == -1:
 					if bomb == 1:
-						Motor.motor(mp_max, mp_min + mp_adj, 0.4)
+						Motor.motor(mp_max, mp_min + mp_adj, 0.6)
 						Motor.motor(0, 0, 0.8)
 						bomb = 1
 					else:
-						Motor.motor(mp_min, mp_max + mp_adj, 0.4)
+						Motor.motor(mp_min, mp_max + mp_adj, 0.6)
 						Motor.motor(0, 0, 0.8)
 						bomb = 0
 
 				# --- detect but no goal --- #
 				elif goalFlug < 100:
 					# --- target left --- #
-					if goalArea < 3000 and goalArea > 0 and goalGAP < 0:
+					if goalArea < 7000 and goalArea > 0 and goalGAP < 0:
 						MP = goal_detection.curvingSwitch(goalGAP, adj_add)
 						Motor.motor(mp_max - MP, mp_max + mp_adj, 0.6)
 						Motor.motor(0, 0, 0.8)
 						bomb = 1
 					# --- target right --- #
-					elif goalArea < 3000 and goalArea > 0 and goalGAP >= 0:
+					elif goalArea < 7000 and goalArea > 0 and goalGAP >= 0:
 						MP = goal_detection.curvingSwitch(goalGAP, adj_add)
 						Motor.motor(mp_max, mp_max - MP + mp_adj, 0.6)
 						Motor.motor(0, 0, 0.8)
@@ -707,12 +723,12 @@ if __name__ == "__main__":
 						# --- near the target --- #
 						if goalGAP < 0:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-							Motor.motor(mp_min, mp_max + MP + mp_adj, 0.4)
+							Motor.motor(mp_min, mp_max + MP + mp_adj, 0.6)
 							Motor.motor(0, 0, 0.8)
 							bomb = 1
 						else:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.4)
+							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.6)
 							Motor.motor(0, 0, 0.8)
 							bomb = 0
 				elif goalFlug > 105:
@@ -759,5 +775,5 @@ if __name__ == "__main__":
 		Other.saveLog(errorLog, traceback.format_exc())
 		Other.saveLog(errorLog, "\n")
 		IM920.Send("EO")
-		#os.system('sudo reboot')
+		os.system('sudo reboot')
 		close()
