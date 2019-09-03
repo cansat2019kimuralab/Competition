@@ -377,7 +377,7 @@ if __name__ == "__main__":
 				for i in range(3):
 					Other.saveLog(landingLog ,time.time() - t_start, pcount, mcount, plcount, gpsData, BME280.bme280_read(), BMX055.bmx055_read())
 					takePhoto()
-				if RunningGPS.checkGPSstatus(gpsData) == 0:
+				if RunningGPS.checkGPSstatus(gpsData) == 1:
 					nLat = gpsData[1]
 					nLonf = gpsData[2]
 				IM920.Send("G	"+str(nLat)+"	"+str(nLon))
