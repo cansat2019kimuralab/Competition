@@ -113,6 +113,7 @@ stuckCount = 100
 stuckCountThd = 10
 LuxThd = 70			#variable for cover para
 paraExsist = 0 		#variable for Para Detection    0:Not Exsist, 1:Exsist
+paracount = 0		#varable for para stuck
 goalFlug = -1		#variable for GoalDetection		-1:Not Detect, 0:Goal, 1:Detect
 goalBufFlug = -1	#variable for GoalDetection buf
 goalArea = 0		#variable for goal area
@@ -408,25 +409,24 @@ if __name__ == "__main__":
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), paraLuxflug, paraLux, LuxThd)
 				if paraLuxflug == 1:
 					break
-			'''
-			# --- StuckDetection --- #
-			Motor.motor(15, 15, 0.9)
-			Motor.motor(0, 0, 0.9)
-			stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, PstuckCount, stuckCountThd)
-			if stuckFlug == 1:
-				Motor.motor(-70, 70, 1)
-				Motor.motor(70, -70, 1)
-				Motor.motor(-70, 70, 1)
-				Motor.motor(70, -70, 1)
-				Motor.motor(0, 0, 1)
-			'''
 			Motor.motor(-20, -20, 0.9)
 			Motor.motor(0, 0, 0,9)
 			Motor.motor(15,15, 0.9)
 			Motor.motor(0, 0, 0.9)
+
+			print("START: stuck")
+			for i in range(20):
+				BMX055data = BMX055.bmx055_read()
+				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), BMX055data)
+				if BMX055data[2] < 5:
+					paracount = paracount + 1
+					if pracount > 4:
+						break
+				else:
+					paracount = 0
+
 			t_paraDete_start = time.time()
-			BMX055data = BMX055.bmx055_read()
-			while BMX055data[2] < 5:
+			while  paracount > 4:
 				if time.time() - t_paraDete_start > timeout_parachute:
 					break
 				Motor.motor(80, 80, 0.2, 1)
@@ -435,7 +435,16 @@ if __name__ == "__main__":
 				Motor.motor(0, 0, 0.8)
 				Motor.motor(15, 15, 0.9)
 				Motor.motor(0, 0, 2)
-				BMX055data = BMX055.bmx055_read()
+				paracount = 0
+				for i in range(20):
+					BMX055data = BMX055.bmx055_read()
+					Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), BMX055data)
+					if BMX055data[2] < 5:
+						paracount = paracount + 1
+						if pracount > 4:
+							break
+					else:
+						paracount = 0
 
 			# --- Parachute Avoidance --- #
 			print("START: Parachute avoidance")
@@ -630,8 +639,11 @@ if __name__ == "__main__":
 								
 				# --- Stuck Detection --- #
 				if time.time() - t_stuckDete_start > timeout_stuck:
+					t_stuckDete_start = time.time()
 					stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
-					if stuckFlug == 1:
+					while stuckFlug == 1:
+						if time.time() - t_stuckDete_start > timeout_stuck:
+							break
 						Motor.motor(-80, -80, 3, 1)
 						Motor.motor(0 ,0, 2)
 						Motor.motor(-80, 80, 3, 1)
@@ -640,6 +652,7 @@ if __name__ == "__main__":
 						Motor.motor(0 ,0, 2)
 						Motor.motor(80, -80, 3, 1)
 						Motor.motor(0, 0, 2)
+						stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
 					t_stuckDete_start = time.time()
 				
 				# --- get information --- #
