@@ -101,13 +101,13 @@ presslandThd = 0.1
 gyrolandThd = 20
 photolandThd  =0.98
 
-luxjreleaseudge = 0		#for release
-pressreleasejudge = 0		#for release 
-photoreleasejudge = 0 #for release
-presslandjudge = 0  # for land
-gyrolandjudge=0   #for land
-photolandjudge = 0 # for land
-gpsjudge = 0		#(for land)
+luxreleaseudge = 0		#for release
+pressreleasejudge = 0	#for release 
+photoreleasejudge = 0 	#for release
+presslandjudge = 0  	# for land
+gyrolandjudge=0   		#for land
+photolandjudge = 0 		# for land
+gpsjudge = 0			#(for land)
 
 stuckFlug = 0
 stuckThd = 100
