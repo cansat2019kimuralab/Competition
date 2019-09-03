@@ -420,7 +420,7 @@ if __name__ == "__main__":
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), BMX055data)
 				if BMX055data[2] < 5:
 					paracount = paracount + 1
-					if pracount > 4:
+					if paracount > 4:
 						break
 				else:
 					paracount = 0
@@ -429,10 +429,14 @@ if __name__ == "__main__":
 			while  paracount > 4:
 				if time.time() - t_paraDete_start > timeout_parachute:
 					break
-				Motor.motor(80, 80, 0.2, 1)
-				Motor.motor(0, 0, 0.8)
-				Motor.motor(-80, -80, 0.2, 1)
-				Motor.motor(0, 0, 0.8)
+				Motor.motor(70, 70, 0.2, 1)
+				Motor.motor(0, 0, 2.0)
+				Motor.motor(-70, -70, 0.2, 1)
+				Motor.motor(0, 0, 2.0)
+				Motor.motor(-60, 60, 0.4)
+				Motor.motor(0, 0, 2.0)
+				Motor.motor(60, -60, 0.4)
+				Motor.motor(0, 0, 2.0)
 				Motor.motor(15, 15, 0.9)
 				Motor.motor(0, 0, 2)
 				paracount = 0
@@ -441,7 +445,7 @@ if __name__ == "__main__":
 					Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), BMX055data)
 					if BMX055data[2] < 5:
 						paracount = paracount + 1
-						if pracount > 4:
+						if paracount > 4:
 							break
 					else:
 						paracount = 0
