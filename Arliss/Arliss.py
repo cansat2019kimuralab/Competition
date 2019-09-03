@@ -102,7 +102,7 @@ gyrolandThd = 20
 photolandThd  =0.98
 
 luxreleaseudge = 0		#for release
-pressreleasejudge = 0	#for release 
+pressreleasejudge = 0	#for release
 photoreleasejudge = 0 	#for release
 presslandjudge = 0  	# for land
 gyrolandjudge=0   		#for land
@@ -206,10 +206,12 @@ def setup():
 		phaseChk = 0
 	#if it is debug
 	#phaseChk = 8
+
 	if phaseChk == 0:
 		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
 		startPosStatus = 1
 	else:
+		Other.saveLog(postionLog, "\t")
 		if(Other.positionCheck(positionLog) == [0.0, 0.0]):
 			print("Not Logged Start Position")
 			startPosStatus = 1
@@ -230,7 +232,7 @@ def transmitPhoto(sendimgName = ""):
 		Motor.motor(0, 0, 1)
 		takePhoto()
 		print("Send Photo")
-		sendPhoto.sendPhoto(photo) 
+		sendPhoto.sendPhoto(photo)
 		print("Send Photo Finished")
 		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
 		IM920.Strt("2")  #distancemode
@@ -288,7 +290,7 @@ def calibration():
 def readGPSdata():
 	global gpsData
 	global nLat, nLon
-	
+
 	print("Read GPS Data")
 	gpsData = GPS.readGPS()
 	while(not RunningGPS.checkGPSstatus(gpsData)):
@@ -619,7 +621,7 @@ if __name__ == "__main__":
 					# --- Calibration --- #
 					if(time.time() - t_calib_origin > timeout_calibration):
 						# --- Send Photo and Calibration--- #
-						Motor.motor(0, 0, 2)       
+						Motor.motor(0, 0, 2)
 						transmitPhoto(airphoto)
 
 						#Every [timeout_calibratoin] second,  Calibrate
@@ -658,10 +660,10 @@ if __name__ == "__main__":
 									Motor.motor(-60, -60, 3)
 									Motor.motor(0, 0, 1)
 									Motor.motor(60, -60, 5)
-									Motor.motor(0, 0, 1) 
+									Motor.motor(0, 0, 1)
 								else:
 									# - Stuck Many Many Time - #
-									print("Stuck" + str(stuckMode))								
+									print("Stuck" + str(stuckMode))
 									Motor.motor(-80, -80, 5)
 									Motor.motor(0, 0, 1)
 									Motor.motor(80, -80, 3)
@@ -697,7 +699,7 @@ if __name__ == "__main__":
 			IM920.Send("P8S")
 
 			# --- Transmit Image --- #
-			transmitPhoto()
+			transmitPhoto(photoName)
 
 			t_goalDete_start = time.time()
 			t_stuckDete_start = time.time()
@@ -797,7 +799,7 @@ if __name__ == "__main__":
 			IM920.Send("P9S")
 			for i in range(3):
 				IM920.Send("P9D")
-				transmitPhoto()
+				transmitPhoto(photoName)
 				time.sleep(1)
 				IM920.Send("P9D")
 			print("Sending Photo Phase Finished")
