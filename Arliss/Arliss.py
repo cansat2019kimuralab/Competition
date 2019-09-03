@@ -238,7 +238,17 @@ def transmitPhoto(sendimgName = ""):
 		IM920.Strt("2")  #distancemode
 		time.sleep(1)
 	else:
-		print("photo error")
+		print("airphoto")
+		IM920.Strt("1") #fastmode
+		time.sleep(1)
+		Motor.motor(15, 15, 0.9)
+		Motor.motor(0, 0, 1)
+		print("Send Photo")
+		sendPhoto.sendPhoto(sendimgName)
+		print("Send Photo Finished")
+		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
+		IM920.Strt("2")  #distancemode
+		time.sleep(1)
 
 def takePhoto():
 	global photoName
@@ -435,8 +445,8 @@ if __name__ == "__main__":
 				Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting" + str(i))
 			Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting Finished")
 			IM920.Send("P5F")
-			transmitphoto(airphoto)
-			transmitphoto()
+			transmitPhoto(airphoto)
+			transmitPhoto()
 
 		# ------------------- ParaAvoidance Phase ------------------- #
 		print("Start Pos")
