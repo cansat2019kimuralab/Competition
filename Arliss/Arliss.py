@@ -372,7 +372,7 @@ if __name__ == "__main__":
 				print("p"+str(pcount)+"  m"+str(mcount)+" pl"+str(plcount))
 				# --- Save Log and Take Photo--- #
 				for i in range(3):
-					Other.saveLog(landingLog ,time.time() - t_start, pcount, gacount, mcount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
+					Other.saveLog(landingLog ,time.time() - t_start, pcount, mcount, plcount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
 					takePhoto()
 				IM920.Send("P4D")
 			else:
