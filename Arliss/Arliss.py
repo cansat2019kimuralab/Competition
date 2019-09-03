@@ -237,7 +237,7 @@ def transmitPhoto(sendimgName = ""):
 		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
 		IM920.Strt("2")  #distancemode
 		time.sleep(1)
-	else:
+	else:  # 1st time transmit
 		print("airphoto")
 		IM920.Strt("1") #fastmode
 		time.sleep(1)
@@ -246,7 +246,7 @@ def transmitPhoto(sendimgName = ""):
 		print("Send Photo")
 		sendPhoto.sendPhoto(sendimgName)
 		print("Send Photo Finished")
-		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
+		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), sendimgName)
 		IM920.Strt("2")  #distancemode
 		time.sleep(1)
 
