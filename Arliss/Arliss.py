@@ -219,7 +219,7 @@ def setup():
 			startPosStatus = 0
 	#print(startPosStatus)
 
-def transmitPhoto(photoName):
+def transmitPhoto(sendimgName = photoName):
 	global t_start
 	IM920.Strt("1") #fastmode
 	time.sleep(1)
@@ -227,7 +227,7 @@ def transmitPhoto(photoName):
 	Motor.motor(0, 0, 1)
 	takePhoto()
 	print("Send Photo")
-	sendPhoto.sendPhoto(photoName)  #if it is ordinally
+	sendPhoto.sendPhoto(sendimgName) 
 	print("Send Photo Finished")
 	Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
 	IM920.Strt("2")  #distancemode
@@ -690,7 +690,7 @@ if __name__ == "__main__":
 			IM920.Send("P8S")
 
 			# --- Transmit Image --- #
-			transmitPhoto(photoName)
+			transmitPhoto()
 
 			t_goalDete_start = time.time()
 			t_stuckDete_start = time.time()
@@ -790,7 +790,7 @@ if __name__ == "__main__":
 			IM920.Send("P9S")
 			for i in range(3):
 				IM920.Send("P9D")
-				transmitPhoto(photoName)
+				transmitPhoto()
 				time.sleep(1)
 				IM920.Send("P9D")
 			print("Sending Photo Phase Finished")
