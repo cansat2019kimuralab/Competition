@@ -373,8 +373,8 @@ if __name__ == "__main__":
 
 				print("p"+str(pcount)+"  m"+str(mcount)+" pl"+str(plcount))
 				# --- Save Log and Take Photo--- #
-				gpsData = GPS.readGPS()
 				for i in range(3):
+					gpsData = GPS.readGPS()
 					Other.saveLog(landingLog ,time.time() - t_start, pcount, mcount, plcount, gpsData, BME280.bme280_read(), BMX055.bmx055_read())
 					takePhoto()
 				if RunningGPS.checkGPSstatus(gpsData) == 1:
