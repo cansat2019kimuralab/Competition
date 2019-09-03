@@ -25,11 +25,11 @@ import Other
 
 pi = pigpio.pi()
 
-bme280Log = "checkBME280Log.txt"
-bmx055Log = "checkBMX055Log.txt"
-gpsLog = "checkGSLog.txt"
-captureLog = "checkCaptureLog.txt"
-tsl2561Log = "checkTSL2561Log.txt"
+bme280Log = "log/checkBME280Log.txt"
+bmx055Log = "log/checkBMX055Log.txt"
+gpsLog = "log/checkGSLog.txt"
+captureLog = "log/checkCaptureLog.txt"
+tsl2561Log = "log/checkTSL2561Log.txt"
 
 
 if __name__ == "__main__":
@@ -49,10 +49,10 @@ if __name__ == "__main__":
 			# --- Motor Check --- #
 			print("\n\nMotor Check Start")
 			Motor.motor(0, 0, 1)
-			Motor.motor(50, 0, 1)
-			Motor.motor(0, 50, 1)
-			Motor.motor(-50, 0, 1)
-			Motor.motor(0, -50, 1)
+			print(Motor.motor(50, 0, 1))
+			print(Motor.motor(0, 50, 1))
+			print(Motor.motor(-50, 0, 1))
+			print(Motor.motor(0, -50, 1))
 			Motor.motor(0, 0, 1)
 
 			# --- Sensor Check --- #
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
 			print("\n\nCapture Test")
 			for i in range(10): #Camera
-				data = Capture.Capture("/home/pi/photo/photo")
+				data = Capture.Capture("photo/photo")
 				Other.saveLog(captureLog, data)
 				print(data)
 				time.sleep(1)
@@ -95,15 +95,11 @@ if __name__ == "__main__":
 			IM920.Strt("1")
 			for i in range(10): #IM920
 				data = IM920.Send("P" + str(i))
-				print("fastmode "+str(data))
-				time.sleep(1)
+				print("fastmode\t"+str(data))
 			IM920.Strt("2")
 			for i in range(10): #IM920
 				data = IM920.Send("P" + str(i))
-				print("distancemode "+str(data))
-
-
-
+				print("distancemode\t"+str(data))
 	except:
 		pi.write(17, 0)
 		Motor.motor(0, 0, 1)
