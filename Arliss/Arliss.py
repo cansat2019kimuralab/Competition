@@ -208,7 +208,7 @@ def setup():
 	#phaseChk = 8
 	if phaseChk == 0:
 		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
-		startPosStatus = 0
+		startPosStatus = 1
 	else:
 		if(Other.positionCheck(positionLog) == [0.0, 0.0]):
 			print("Not Logged Start Position")
@@ -563,7 +563,7 @@ if __name__ == "__main__":
 					kp = 0.8
 					maxMP = 40
 				else:
-					kp = 0.5
+					kp = 0.7
 					maxMP = 70
 
 				disStart = RunningGPS.calGoal(nLat, nLon, rsLat, rsLon, nAng)
@@ -597,7 +597,7 @@ if __name__ == "__main__":
 					if(paraExsist == 0):	# - Parachute Not Exsist - #
 						IM920.Send("P7PN")
 						print("Parachute is not found")
-						Motor.motor(60, 60, 5)
+						Motor.motor(55, 60, 5)
 					else:			# - Parachute Exsist - #
 						print("Parachute is found")
 						IM920.Send("P7PE")
@@ -678,7 +678,7 @@ if __name__ == "__main__":
 					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					gpsData = GPS.readGPS()
-					Motor.motor(mPL, mPR, 0.05, 1)
+					Motor.motor(mPL, mPR, 0.06, 1)
 			Motor.motor(0, 0, 1)
 			print("Running Phase Finished")
 			IM920.Send("P7F")
