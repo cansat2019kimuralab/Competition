@@ -373,10 +373,15 @@ if __name__ == "__main__":
 
 				print("p"+str(pcount)+"  m"+str(mcount)+" pl"+str(plcount))
 				# --- Save Log and Take Photo--- #
+				gpsData = GPS.readGPS()
 				for i in range(3):
-					Other.saveLog(landingLog ,time.time() - t_start, pcount, mcount, plcount, GPS.readGPS(), BME280.bme280_read(), BMX055.bmx055_read())
+					Other.saveLog(landingLog ,time.time() - t_start, pcount, mcount, plcount, gpsData, BME280.bme280_read(), BMX055.bmx055_read())
 					takePhoto()
-				IM920.Send("P4D")
+				if RunningGPS.checkGPSstatus(gpsData) == 0:
+					nLat = gpsData[1]
+					nLonf = gpsData[2]
+				IM920.Send("G	"+str(nLat)+"	"+str(nLon))
+				IM920.Send("P4	"+str(pcount)+"	"+str(mcount))
 			else:
 				Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Timeout")
 				print("Landing Timeout")
