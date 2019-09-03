@@ -219,19 +219,24 @@ def setup():
 			startPosStatus = 0
 	#print(startPosStatus)
 
-def transmitPhoto(sendimgName = photoName):
+def transmitPhoto(sendimgName = ""):
 	global t_start
-	IM920.Strt("1") #fastmode
-	time.sleep(1)
-	Motor.motor(15, 15, 0.9)
-	Motor.motor(0, 0, 1)
-	takePhoto()
-	print("Send Photo")
-	sendPhoto.sendPhoto(sendimgName) 
-	print("Send Photo Finished")
-	Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
-	IM920.Strt("2")  #distancemode
-	time.sleep(1)
+	if sendimgName == "":
+		photo = ""
+		photo = Capture.Capture(photopath)
+		IM920.Strt("1") #fastmode
+		time.sleep(1)
+		Motor.motor(15, 15, 0.9)
+		Motor.motor(0, 0, 1)
+		takePhoto()
+		print("Send Photo")
+		sendPhoto.sendPhoto(photo) 
+		print("Send Photo Finished")
+		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
+		IM920.Strt("2")  #distancemode
+		time.sleep(1)
+	else:
+		print("photo error")
 
 def takePhoto():
 	global photoName
