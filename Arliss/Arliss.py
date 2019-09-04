@@ -91,6 +91,7 @@ GAcount = 0
 gacount = 0			#GPSheight count for land
 mcount = 0			#Magnet count
 plcount = 0
+
 # --- variable for Judgement (release Thd)--- #
 luxreleaseThd = 100
 pressreleaseThd = 0.3
@@ -149,7 +150,7 @@ kp = 0.5							#Proportional Gain
 stuckMode = [0, 0]					#Variable for Stuck
 maxMP = 70							#Maximum Motor Power
 relAngStatus = 0					#Used for ParaExist
-startPosStatus = 0
+startPosStatus = 0					#Start Position Check, 1: Necessary to Log, 0: Already Logged
 
 # --- variable for Goal Detection --- #
 mp_min = 15							#motor power for Low level
@@ -176,7 +177,7 @@ positionLog = 		"/home/pi/log/positionLog.txt"
 
 photopath = 		"/home/pi/photo/photo"
 photoName =			""
-airphoto =          ""
+airphoto =          ""	#Photo Path 
 fileCal = 			""	#File Path for Calibration Log
 
 pi = pigpio.pi()	#object to set pigpio
@@ -368,7 +369,7 @@ if __name__ == "__main__":
 				t1 = time.time()
 				if luxreleasejudge == 1 or pressreleasejudge == 1:
 					Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Sensor", luxreleasejudge, pressreleasejudge, photoreleasejudge)
-					print("Rover has released")
+					#print("Rover has released")
 					airphoto = Capture.Capture(photopath)
 					break
 				elif luxreleasejudge == 2 or pressreleasejudge == 2: #when i2c is dead
@@ -419,7 +420,8 @@ if __name__ == "__main__":
 					elif photolandjudge == 0:
 						print("emergency Descend now")
 				else:
-					print("Land judge now")
+					pass
+					#print("Land judge now")
 
 				print("p"+str(pcount)+"  m"+str(mcount)+" pl"+str(plcount))
 				# --- Save Log and Take Photo--- #
@@ -477,6 +479,7 @@ if __name__ == "__main__":
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), paraLuxflug, paraLux, LuxThd)
 				if paraLuxflug == 1:
 					break
+				time.sleep(1)
 			Motor.motor(-20, -20, 0.9)
 			Motor.motor(0, 0, 0,9)
 			Motor.motor(15,15, 0.9)
