@@ -211,7 +211,7 @@ def setup():
 		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
 		startPosStatus = 1
 	else:
-		Other.saveLog(postionLog, "\t")
+		Other.saveLog(positionLog, "\t")
 		if(Other.positionCheck(positionLog) == [0.0, 0.0]):
 			print("Not Logged Start Position")
 			startPosStatus = 1
@@ -242,6 +242,12 @@ def takePhoto():
 	if not(photo == "Null"):
 		photoName = photo
 	Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
+
+def beacon():
+	IM920.Strt("1") #fastmode
+	IM920.Send("B")
+	IM920.Strt("2") # distancemode
+
 
 def calibration():
 	global ellipseScale
