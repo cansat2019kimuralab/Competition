@@ -146,7 +146,9 @@ nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
 rAng = 0.0							#Median of relAng [deg]
 mP, mPL, mPR, mPS = 0, 0, 0, 0		#Motor Power
-kp = 0.5							#Proportional Gain
+kpF = 0.05							#Proportional Gain when rover is far from goal
+kpC = 0.8							#Proportional Gain when rover i close to goal
+kp = kpF
 stuckMode = [0, 0]					#Variable for Stuck
 maxMP = 70							#Maximum Motor Power
 relAngStatus = 0					#Used for ParaExist
@@ -265,7 +267,6 @@ def beacon():
 	IM920.Strt("1") #fastmode convert
 	IM920.Send("B")
 	IM920.Strt("2") # distancemode
-
 
 def calibration():
 	global ellipseScale
@@ -451,8 +452,8 @@ if __name__ == "__main__":
 			IM920.Send("P5S")
 			Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting Start")
 			for i in range(3):
-				print("Melting " + str(i))
-				IM920.Send("P5	" + str(i))
+				print("Melting " + str(i+1))
+				IM920.Send("P5	" + str(i+1))
 				Melting.Melting(t_melt)
 				time.sleep(1)
 				Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting" + str(i))
@@ -589,10 +590,10 @@ if __name__ == "__main__":
 
 				# --- Change Gain --- #
 				if(disGoal <= 15):
-					kp = 0.8
+					kp = kpC
 					maxMP = 40
 				else:
-					kp = 0.4
+					kp = kpF
 					maxMP = 70
 
 				disStart = RunningGPS.calGoal(nLat, nLon, rsLat, rsLon, nAng)
@@ -601,10 +602,8 @@ if __name__ == "__main__":
 					IM920.Send("P7P")
 					# --- Set Rover toward Goal --- #
 					relAngStatus = 0
-					for i in range(50):
+					for i in range(30):
 						nAng = RunningGPS.calNAng(ellipseScale, angOffset)			#Calculate Rover Angle
-						relAng[2] = relAng[1]
-						relAng[1] = relAng[0]
 						disGoal, angGoal, rAng = RunningGPS.calGoal(nLat, nLon, gLat, gLon, nAng)
 						mPS = (-1) * rAng * 1.0 / 1.8
 						mPS = 60 if mPS > 60 else mPS
@@ -675,12 +674,13 @@ if __name__ == "__main__":
 								if(stuckMode[1] <= 3):
 									# - Stuck- #
 									print("Stuck" + str(stuckMode))
-									Motor.motor(80, 80, 4)
+									Motor.motor(80, 80, 4, 1)
 									Motor.motor(60, 60, 1)
 								elif(stuckMode[1] <= 5):
 									# - Stuck Many Time - #
 									print("Stuck" + str(stuckMode))
-									Motor.motor(-60, -60, 3)
+									Motor.motor(-30, -30, 1)
+									Motor.motor(-60, -60, 3, 1)
 									Motor.motor(0, 0, 1)
 									Motor.motor(60, -60, 5)
 									Motor.motor(0, 0, 1)
@@ -711,6 +711,8 @@ if __name__ == "__main__":
 					Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					gpsData = GPS.readGPS()
 					Motor.motor(mPL, mPR, 0.06, 1)
+			Motor.motor(20, 20)
+			Motor.motor(10, 10)
 			Motor.motor(0, 0, 1)
 			print("Running Phase Finished")
 			IM920.Send("P7F")
@@ -728,6 +730,7 @@ if __name__ == "__main__":
 			t_stuckDete_start = time.time()
 			while goalFlug != 0 or goalBufFlug != 0:
 				if time.time() - t_goalDete_start > timeout_goalDete:
+					Other.saveLog(goalDetectionLog, time.time() - t_start, "Goal Detection Phase Finished By Timeout")
 					break
 				gpsdata = GPS.readGPS()
 				goalBufFlug = goalFlug
@@ -764,7 +767,6 @@ if __name__ == "__main__":
 				if goalFlug == 0:
 					Motor.motor(40, 40 + mp_adj, 0.4)
 					Motor.motor(0, 0, 0.8)
-
 				# --- not detect --- #
 				elif goalFlug == -1:
 					if bomb == 1:
@@ -775,7 +777,6 @@ if __name__ == "__main__":
 						Motor.motor(mp_min, mp_max + mp_adj, 0.6)
 						Motor.motor(0, 0, 0.8)
 						bomb = 0
-
 				# --- detect but no goal --- #
 				elif goalFlug < 100:
 					# --- target left --- #
