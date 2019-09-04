@@ -259,7 +259,7 @@ def takePhoto():
 	Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 
 def beacon():
-	IM920.Strt("1") #fastmode
+	IM920.Strt("1") #fastmode convert
 	IM920.Send("B")
 	IM920.Strt("2") # distancemode
 
@@ -432,6 +432,7 @@ if __name__ == "__main__":
 					nLon = gpsData[2]
 				IM920.Send("G	"+str(nLat)+"	"+str(nLon))
 				IM920.Send("P4	"+str(pcount)+"	"+str(mcount))
+				beacon()
 			else:
 				Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Timeout")
 				print("Landing Timeout")
@@ -451,8 +452,6 @@ if __name__ == "__main__":
 				Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting" + str(i))
 			Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting Finished")
 			IM920.Send("P5F")
-			transmitPhoto(airphoto)
-			transmitPhoto()
 
 		# ------------------- ParaAvoidance Phase ------------------- #
 		print("Start Pos")
