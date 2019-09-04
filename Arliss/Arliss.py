@@ -714,7 +714,7 @@ if __name__ == "__main__":
 			IM920.Send("P8S")
 
 			# --- Transmit Image --- #
-			transmitPhoto(photoName)
+			transmitPhoto()
 
 			t_goalDete_start = time.time()
 			t_stuckDete_start = time.time()
@@ -814,7 +814,7 @@ if __name__ == "__main__":
 			IM920.Send("P9S")
 			for i in range(3):
 				IM920.Send("P9D")
-				transmitPhoto(photoName)
+				transmitPhoto()
 				time.sleep(1)
 				IM920.Send("P9D")
 			print("Sending Photo Phase Finished")
