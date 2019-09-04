@@ -206,7 +206,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 7
+	#phaseChk = 7
 
 	if phaseChk == 0:
 		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
@@ -224,6 +224,7 @@ def setup():
 
 def transmitPhoto(sendimgName = ""):
 	global t_start
+	photo = ""
 	if sendimgName == "":
 		IM920.Strt("1") #fastmode
 		time.sleep(1)
@@ -231,7 +232,7 @@ def transmitPhoto(sendimgName = ""):
 		Motor.motor(0, 0, 1)
 		takePhoto()
 		print("Send Photo")
-		sendPhoto.sendPhoto(photo)
+		sendPhoto.sendPhoto(photoName)
 		print("Send Photo Finished")
 		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
 		IM920.Strt("2")  #distancemode
@@ -441,6 +442,8 @@ if __name__ == "__main__":
 				Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Timeout")
 				print("Landing Timeout")
 			IM920.Send("P4F")
+			transmitPhoto(airphoto)  #for debug
+			transmitPhoto()			#for debug
 
 		# ------------------- Melting Phase ------------------- #
 		if(phaseChk <= 5):
