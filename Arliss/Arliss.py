@@ -102,7 +102,7 @@ gyrolandThd = 20
 photolandThd  =0.98
 
 luxreleaseudge = 0		#for release
-pressreleasejudge = 0	#for release 
+pressreleasejudge = 0	#for release
 photoreleasejudge = 0 	#for release
 presslandjudge = 0  	# for land
 gyrolandjudge=0   		#for land
@@ -206,7 +206,7 @@ def setup():
 		phaseChk = 0
 	#if it is debug
 	#phaseChk = 8
-	
+
 	if phaseChk == 0:
 		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
 		startPosStatus = 1
@@ -221,19 +221,34 @@ def setup():
 			startPosStatus = 0
 	#print(startPosStatus)
 
-def transmitPhoto(photoName):
+def transmitPhoto(sendimgName = ""):
 	global t_start
-	IM920.Strt("1") #fastmode
-	time.sleep(1)
-	Motor.motor(15, 15, 0.9)
-	Motor.motor(0, 0, 1)
-	takePhoto()
-	print("Send Photo")
-	sendPhoto.sendPhoto(photoName)  #if it is ordinally
-	print("Send Photo Finished")
-	Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
-	IM920.Strt("2")  #distancemode
-	time.sleep(1)
+	if sendimgName == "":
+		photo = ""
+		photo = Capture.Capture(photopath)
+		IM920.Strt("1") #fastmode
+		time.sleep(1)
+		Motor.motor(15, 15, 0.9)
+		Motor.motor(0, 0, 1)
+		takePhoto()
+		print("Send Photo")
+		sendPhoto.sendPhoto(photo)
+		print("Send Photo Finished")
+		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
+		IM920.Strt("2")  #distancemode
+		time.sleep(1)
+	else:  # 1st time transmit
+		print("airphoto")
+		IM920.Strt("1") #fastmode
+		time.sleep(1)
+		Motor.motor(15, 15, 0.9)
+		Motor.motor(0, 0, 1)
+		print("Send Photo")
+		sendPhoto.sendPhoto(sendimgName)
+		print("Send Photo Finished")
+		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), sendimgName)
+		IM920.Strt("2")  #distancemode
+		time.sleep(1)
 
 def takePhoto():
 	global photoName
@@ -291,7 +306,7 @@ def calibration():
 def readGPSdata():
 	global gpsData
 	global nLat, nLon
-	
+
 	print("Read GPS Data")
 	gpsData = GPS.readGPS()
 	while(not RunningGPS.checkGPSstatus(gpsData)):
@@ -436,6 +451,8 @@ if __name__ == "__main__":
 				Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting" + str(i))
 			Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting Finished")
 			IM920.Send("P5F")
+			transmitPhoto(airphoto)
+			transmitPhoto()
 
 		# ------------------- ParaAvoidance Phase ------------------- #
 		print("Start Pos")
@@ -620,7 +637,7 @@ if __name__ == "__main__":
 					# --- Calibration --- #
 					if(time.time() - t_calib_origin > timeout_calibration):
 						# --- Send Photo and Calibration--- #
-						Motor.motor(0, 0, 2)       
+						Motor.motor(0, 0, 2)
 						transmitPhoto(airphoto)
 
 						#Every [timeout_calibratoin] second,  Calibrate
@@ -659,10 +676,10 @@ if __name__ == "__main__":
 									Motor.motor(-60, -60, 3)
 									Motor.motor(0, 0, 1)
 									Motor.motor(60, -60, 5)
-									Motor.motor(0, 0, 1) 
+									Motor.motor(0, 0, 1)
 								else:
 									# - Stuck Many Many Time - #
-									print("Stuck" + str(stuckMode))								
+									print("Stuck" + str(stuckMode))
 									Motor.motor(-80, -80, 5)
 									Motor.motor(0, 0, 1)
 									Motor.motor(80, -80, 3)
