@@ -135,7 +135,7 @@ count = 0			#valiable for transmit count
 amari = 0
 
 # --- variable for Running --- #
-ellipseScale = [-99.79881015576746, 171.782066653816, 1.586018339640338, 0.9521503173796134] #Convert coefficient Ellipse to Circle
+ellipseScale = [13.871865096256819, 119.37576722002399, 0.8063121059825484, 0.758821948664667] #Convert coefficient Ellipse to Circle
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
@@ -284,6 +284,7 @@ def calibration():
 			calData = ellipseScale
 			Motor.motor(0, 0, 1)
 			Motor.motor(-60, -60, 2)
+			print("Calibration Failed")
 			Other.saveLog(stuckLog, time.time() - t_start, GPS.readGPS(), 3, 0)
 			Other.saveLog(fileCal, time.time() - t_start, "Calibration Failed")
 			break
@@ -389,7 +390,6 @@ if __name__ == "__main__":
 				# --- Save Log and Take Photo --- #
 				#gpsData = GPS.readGPS()
 				takePhoto()
-				print(gpsData)
 				Other.saveLog(releaseLog, time.time() - t_start, lcount, acount, fcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
 				#IM920.Send("P3D")
 			else:
@@ -462,8 +462,7 @@ if __name__ == "__main__":
 			IM920.Send("P5F")
 
 		# ------------------- ParaAvoidance Phase ------------------- #
-		print("Start Pos")
-		print(startPosStatus)
+		#print("Start Pos", startPosStatus)
 		if(startPosStatus == 1):
 			readGPSdata()
 			rsLat = gpsData[1]
@@ -503,6 +502,7 @@ if __name__ == "__main__":
 						break
 				else:
 					paracount = 0
+
 			# --- Stuck Escape --- #
 			t_paraDete_start = time.time()
 			while  paracount > 4:
@@ -539,6 +539,7 @@ if __name__ == "__main__":
 				Motor.motor(15, 15, 0.9)
 				Motor.motor(0, 0, 0.9)
 				paraExsist, paraArea, photoName = ParaDetection.ParaDetection(photopath, H_min, H_max, S_thd)
+				print(paraExist, paraArea, photoName)
 				# --- infront of me --- #
 				if paraExsist == 1:
 					Motor.motor(-mp_max, -mp_max, 5)
@@ -563,7 +564,8 @@ if __name__ == "__main__":
 				Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), photoName, paraExsist, paraArea)
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Finished")
-		# ------------------- Photo transmit Phase ------------------- #
+
+			# --- Photo transmit Phase --- #
 			transmitPhoto(airphoto)
 			IM920.Send("P6F")
 
@@ -714,13 +716,9 @@ if __name__ == "__main__":
 					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					gpsData = GPS.readGPS()
-<<<<<<< HEAD
 					Motor.motor(mPL, mPR, 0.06, 1)
 			Motor.motor(20, 20)
 			Motor.motor(10, 10)
-=======
-					Motor.motor(mPL, mPR, 0.05, 1)
->>>>>>> origin/master
 			Motor.motor(0, 0, 1)
 			print("Running Phase Finished")
 			IM920.Send("P7F")
