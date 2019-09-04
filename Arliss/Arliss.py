@@ -206,7 +206,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	#phaseChk = 8
+	phaseChk = 7
 
 	if phaseChk == 0:
 		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
@@ -585,14 +585,14 @@ if __name__ == "__main__":
 					nLat = gpsData[1]
 					nLon = gpsData[2]
 					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
-					IM920.Send("G" + str(nLat) + "	" + str(nLon))
+					#IM920.Send("G" + str(nLat) + "	" + str(nLon))
 
 				# --- Change Gain --- #
 				if(disGoal <= 15):
 					kp = 0.8
 					maxMP = 40
 				else:
-					kp = 0.4
+					kp = 0.03
 					maxMP = 70
 
 				disStart = RunningGPS.calGoal(nLat, nLon, rsLat, rsLon, nAng)
@@ -704,13 +704,14 @@ if __name__ == "__main__":
 					relAng[1] = relAng[0]
 					disGoal, angGoal, relAng[0] = RunningGPS.calGoal(nLat, nLon, gLat, gLon, nAng)
 					rAng = np.median(relAng)									#Calculate angle between Rover and Goal
+					#rAng = relAng[0]
 					mPL, mPR, mPS = RunningGPS.runMotorSpeed(rAng, kp, maxMP)	#Calculate Motor Power
 
 					# --- Save Log --- #
 					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					gpsData = GPS.readGPS()
-					Motor.motor(mPL, mPR, 0.06, 1)
+					Motor.motor(mPL, mPR, 0.05, 1)
 			Motor.motor(0, 0, 1)
 			print("Running Phase Finished")
 			IM920.Send("P7F")
