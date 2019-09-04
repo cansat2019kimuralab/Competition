@@ -225,8 +225,6 @@ def setup():
 def transmitPhoto(sendimgName = ""):
 	global t_start
 	if sendimgName == "":
-		photo = ""
-		photo = Capture.Capture(photopath)
 		IM920.Strt("1") #fastmode
 		time.sleep(1)
 		Motor.motor(15, 15, 0.9)
