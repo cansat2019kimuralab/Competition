@@ -139,7 +139,7 @@ ellipseScale = [-99.79881015576746, 171.782066653816, 1.586018339640338, 0.95215
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon = 35.918181, 139.907992	#Coordinates of Goal
+gLat, gLon = 35.924015, 139.912353	#Coordinates of Goal
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 rsLat, rsLon = 0.0, 0.0				#Coordinates of Running Start Position
 nAng = 0.0							#Direction of That time [deg]
@@ -253,6 +253,7 @@ def transmitPhoto(sendimgName = ""):
 
 def takePhoto():
 	global photoName
+	global gpsData
 	photo = ""
 	photo = Capture.Capture(photopath)
 	if not(photo == "Null"):
@@ -380,13 +381,15 @@ if __name__ == "__main__":
 					elif photoreleasejudge == 0:
 						print("i2c is dead!")
 				else:
-					print("Rover is in rocket")
+					pass
+					#print("Rover is in rocket")
 					#IM920.Send("P3D")
 				print("l"+str(lcount)+"  a"+ str(acount)+"  f"+str(fcount))
 				# --- Save Log and Take Photo --- #
-				gpsData = GPS.readGPS()
-				Other.saveLog(releaseLog, time.time() - t_start, lcount, acount, fcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
+				#gpsData = GPS.readGPS()
 				takePhoto()
+				print(gpsData)
+				Other.saveLog(releaseLog, time.time() - t_start, lcount, acount, fcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
 				#IM920.Send("P3D")
 			else:
 				Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Timeout")
@@ -426,9 +429,9 @@ if __name__ == "__main__":
 				print("p"+str(pcount)+"  m"+str(mcount)+" pl"+str(plcount))
 				# --- Save Log and Take Photo--- #
 				for i in range(3):
-					gpsData = GPS.readGPS()
-					Other.saveLog(landingLog ,time.time() - t_start, pcount, mcount, plcount, gpsData, BME280.bme280_read(), BMX055.bmx055_read())
+					#gpsData = GPS.readGPS()
 					takePhoto()
+					Other.saveLog(landingLog ,time.time() - t_start, pcount, mcount, plcount, gpsData, BME280.bme280_read(), BMX055.bmx055_read())
 				if RunningGPS.checkGPSstatus(gpsData) == 1:
 					nLat = gpsData[1]
 					nLon = gpsData[2]
@@ -582,15 +585,13 @@ if __name__ == "__main__":
 					nLon = gpsData[2]
 					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					IM920.Send("G" + str(nLat) + "	" + str(nLon))
-					IM920.Send("D" + str(disGoal))
-					IM920.Send("A" + str(nAng))
 
 				# --- Change Gain --- #
 				if(disGoal <= 15):
 					kp = 0.8
 					maxMP = 40
 				else:
-					kp = 0.7
+					kp = 0.4
 					maxMP = 70
 
 				disStart = RunningGPS.calGoal(nLat, nLon, rsLat, rsLon, nAng)
@@ -604,7 +605,7 @@ if __name__ == "__main__":
 						relAng[2] = relAng[1]
 						relAng[1] = relAng[0]
 						disGoal, angGoal, rAng = RunningGPS.calGoal(nLat, nLon, gLat, gLon, nAng)
-						mPS = (-1) * rAng * 0.8/ 1.8
+						mPS = (-1) * rAng * 1.0 / 1.8
 						mPS = 60 if mPS > 60 else mPS
 						mPS = -60 if mPS < -60 else mPS
 						if(mPS > 0):
@@ -621,7 +622,7 @@ if __name__ == "__main__":
 
 					# --- Parachute Check --- #
 					paraExsist, paraArea, photoName = ParaDetection.ParaDetection(photopath, H_min, H_max, S_thd)
-					if(paraExsist == 0):	# - Parachute Not Exsist - #
+					if(paraExsist != 1):	# - Parachute Not Exsist - #
 						IM920.Send("P7PN")
 						print("Parachute is not found")
 						Motor.motor(55, 60, 5)
@@ -629,8 +630,8 @@ if __name__ == "__main__":
 						print("Parachute is found")
 						IM920.Send("P7PE")
 						Motor.motor(-15, -15, 1)
-						Motor.motor(-60, -40, 3)
-						Motor.motor(-60, -60, 1)
+						Motor.motor(-60, -50, 2)
+						Motor.motor(-60, -60, 3)
 					Motor.motor(0, 0, 1)
 
 					# --- Get GPS Data --- #
@@ -649,6 +650,9 @@ if __name__ == "__main__":
 
 					# --- Taking Photo and Check Stuck--- #
 					if(time.time() - t_takePhoto_start > timeout_takePhoto):
+						IM920.Send("G" + str(nLat) + "	" + str(nLon))
+						IM920.Send("D" + str(disGoal))
+						IM920.Send("A" + str(nAng))
 						IM920.Send("P7T")
 						Motor.motor(0, 0, 2)
 						Motor.motor(30, 30, 0.5)
