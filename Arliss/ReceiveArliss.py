@@ -59,7 +59,12 @@ def Reception(mybaudrate =19200):
         text = text.replace("\r\n","")
         textData = text.split(":")[1]
         rssi  =text.split(":")[0]
-        rssi = rssi.split(",")[2]
+        rssi = rssi.split(",")
+        if len(rssi)==3:
+            rssi = rssi[2]
+            power = int(rssi,16) - 235
+        else:
+            pass
         textData = textData.split(",")
         for x in textData:
             cngtext += chr(int(x,16))
@@ -96,10 +101,12 @@ if __name__ == "__main__":
             receiveData, receiveDataDec, power = Reception(baudrate)
             if(receiveDataDec == ""):
                 print(str(datetime.datetime.now())+"        No Data")
+                com.close()
+                com=setSerial(baudrate)
                 continue
             elif(65 <= ord(receiveDataDec[0]) <= 90):
                 # --- Large Alphabet --- #
-                print(str(datetime.datetime.now())+"      "+str(power)+"dbm      "+receiveDataDec)
+                print(str(datetime.datetime.now())+"      "+str(power)+"dBm      "+receiveDataDec)
                 saveLog(receptionLog, datetime.datetime.now(), receiveData)
                 saveLog(receptionDecrptionLog, datetime.datetime.now(), power, receiveDataDec)
                 if(receivePhotoFlug == 1):

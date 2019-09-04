@@ -102,17 +102,19 @@ if __name__ == "__main__":
             receiveData, receiveDataDec, power = Reception(baudrate)
             if(receiveDataDec == ""):
                 print(str(datetime.datetime.now())+"        No Data")
+                com.close()
+                com=setSerial(baudrate)
                 continue
             elif(65 <= ord(receiveDataDec[0]) <= 90):
                 # --- Large Alphabet --- #
-                print(str(datetime.datetime.now())+"      "+str(power)+"dbm      "+receiveDataDec)
+                print(str(datetime.datetime.now())+"      "+str(power)+"dBm      "+receiveDataDec)
                 saveLog(receptionLog, datetime.datetime.now(), receiveData)
                 saveLog(receptionDecrptionLog, datetime.datetime.now(), power, receiveDataDec)
                 if(receivePhotoFlug == 1):
                     receivePhotoName = fileName(receivePhotoPath, 'jpg')
                     cv2.imwrite(receivePhotoName, array)
                     receivePhotoArrayLog = fileName(receivePhotoArrayLogPath, 'txt')
-                    np.save('sample_.npy', array)
+                    np.save('sample1_.npy', array)
                     receivePhotoFlug = 0
                     for i in range(len(array)):
                         for j in range(len(array[i])):
