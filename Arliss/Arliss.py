@@ -146,7 +146,7 @@ nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
 rAng = 0.0							#Median of relAng [deg]
 mP, mPL, mPR, mPS = 0, 0, 0, 0		#Motor Power
-kpF = 0.05							#Proportional Gain when rover is far from goal
+kpF = 0.03							#Proportional Gain when rover is far from goal
 kpC = 0.8							#Proportional Gain when rover i close to goal
 kp = kpF
 stuckMode = [0, 0]					#Variable for Stuck
@@ -208,7 +208,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	#phaseChk = 8
+	#phaseChk = 7
 
 	if phaseChk == 0:
 		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
@@ -226,16 +226,15 @@ def setup():
 
 def transmitPhoto(sendimgName = ""):
 	global t_start
+	photo = ""
 	if sendimgName == "":
-		photo = ""
-		photo = Capture.Capture(photopath)
 		IM920.Strt("1") #fastmode
 		time.sleep(1)
 		Motor.motor(15, 15, 0.9)
 		Motor.motor(0, 0, 1)
 		takePhoto()
 		print("Send Photo")
-		sendPhoto.sendPhoto(photo)
+		sendPhoto.sendPhoto(photoName)
 		print("Send Photo Finished")
 		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
 		IM920.Strt("2")  #distancemode
@@ -444,6 +443,8 @@ if __name__ == "__main__":
 				Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Timeout")
 				print("Landing Timeout")
 			IM920.Send("P4F")
+			#transmitPhoto(airphoto)  #for debug
+			#transmitPhoto()			#for debug
 
 		# ------------------- Melting Phase ------------------- #
 		if(phaseChk <= 5):
@@ -562,6 +563,8 @@ if __name__ == "__main__":
 				Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), photoName, paraExsist, paraArea)
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Finished")
+		# ------------------- Photo transmit Phase ------------------- #
+			transmitPhoto(airphoto)
 			IM920.Send("P6F")
 
 		# ------------------- Running Phase ------------------- #
@@ -586,7 +589,7 @@ if __name__ == "__main__":
 					nLat = gpsData[1]
 					nLon = gpsData[2]
 					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
-					IM920.Send("G" + str(nLat) + "	" + str(nLon))
+					#IM920.Send("G" + str(nLat) + "	" + str(nLon))
 
 				# --- Change Gain --- #
 				if(disGoal <= 15):
@@ -641,7 +644,7 @@ if __name__ == "__main__":
 					if(time.time() - t_calib_origin > timeout_calibration):
 						# --- Send Photo and Calibration--- #
 						Motor.motor(0, 0, 2)
-						transmitPhoto(airphoto)
+						transmitPhoto()
 
 						#Every [timeout_calibratoin] second,  Calibrate
 						print("Calibration")
@@ -704,15 +707,20 @@ if __name__ == "__main__":
 					relAng[1] = relAng[0]
 					disGoal, angGoal, relAng[0] = RunningGPS.calGoal(nLat, nLon, gLat, gLon, nAng)
 					rAng = np.median(relAng)									#Calculate angle between Rover and Goal
+					#rAng = relAng[0]
 					mPL, mPR, mPS = RunningGPS.runMotorSpeed(rAng, kp, maxMP)	#Calculate Motor Power
 
 					# --- Save Log --- #
 					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					gpsData = GPS.readGPS()
+<<<<<<< HEAD
 					Motor.motor(mPL, mPR, 0.06, 1)
 			Motor.motor(20, 20)
 			Motor.motor(10, 10)
+=======
+					Motor.motor(mPL, mPR, 0.05, 1)
+>>>>>>> origin/master
 			Motor.motor(0, 0, 1)
 			print("Running Phase Finished")
 			IM920.Send("P7F")
