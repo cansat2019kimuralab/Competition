@@ -256,9 +256,10 @@ def takePhoto():
 	global gpsData
 	photo = ""
 	photo = Capture.Capture(photopath)
+	gpsData = GPS.readGPS()
 	if not(photo == "Null"):
 		photoName = photo
-	Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
+	Other.saveLog(captureLog, time.time() - t_start, gpsData, BME280.bme280_read(), photoName)
 
 def beacon():
 	IM920.Strt("1") #fastmode convert
