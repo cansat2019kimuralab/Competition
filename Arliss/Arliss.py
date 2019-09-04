@@ -442,8 +442,8 @@ if __name__ == "__main__":
 				Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Timeout")
 				print("Landing Timeout")
 			IM920.Send("P4F")
-			transmitPhoto(airphoto)  #for debug
-			transmitPhoto()			#for debug
+			#transmitPhoto(airphoto)  #for debug
+			#transmitPhoto()			#for debug
 
 		# ------------------- Melting Phase ------------------- #
 		if(phaseChk <= 5):
@@ -562,6 +562,8 @@ if __name__ == "__main__":
 				Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), photoName, paraExsist, paraArea)
 			Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), "ParaAvoidance Finished")
+		# ------------------- Photo transmit Phase ------------------- #
+			transmitPhoto(airphoto)
 			IM920.Send("P6F")
 
 		# ------------------- Running Phase ------------------- #
@@ -643,7 +645,7 @@ if __name__ == "__main__":
 					if(time.time() - t_calib_origin > timeout_calibration):
 						# --- Send Photo and Calibration--- #
 						Motor.motor(0, 0, 2)
-						transmitPhoto(airphoto)
+						transmitPhoto()
 
 						#Every [timeout_calibratoin] second,  Calibrate
 						print("Calibration")
