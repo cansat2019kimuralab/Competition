@@ -33,6 +33,7 @@ receivePhotoData = ['', '', '', '', '']
 receivePhotoNum = [0, 0, 0, 0, 0]
 
 def setSerial(mybaudrate=19200):
+    global com
     com = serial.Serial(
         port=comNum,
         baudrate=mybaudrate,

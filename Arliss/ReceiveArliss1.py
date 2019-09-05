@@ -17,22 +17,24 @@ from matplotlib import pyplot as plt
 baudrate = 19200
 comNum = 'COM8'
 com = 0
-receptionLog = r"communicationLog1.txt"
-receptionDecrptionLog = r"communicationDecryptionLog1.txt"
-receivePhotoArrayLogPath = r"receivePhoto1Log"
+receptionLog = r"C:\Users\hp731\Documents\GitHub\Competition\Arliss\Log1\communicationLog1.txt"
+receptionDecrptionLog = r"C:\Users\hp731\Documents\GitHub\Competition\Arliss\Log1\communicationDecryptionLog1.txt"
+receivePhotoArrayLogPath = r"C:\Users\hp731\Documents\GitHub\Competition\Arliss\Log1\receivePhoto1Log"
 receivePhotoArrayLog = ""
 array = [[[0]*3]*80]*60
 array = np.zeros_like(array)
 I = list(range(5))
 receivePhotoFlug = 0
-receivePhotoPath = "receivePhoto"
-restorePhotoPath = "restorePhoto"
+receivePhotoPath = r"C:\Users\hp731\Documents\GitHub\Competition\Arliss\Log1\receivePhoto"
+restorePhotoPath = r"C:\Users\hp731\Documents\GitHub\Competition\Arliss\Log1\restorePhoto"
+receivearrayPath = r"C:\Users\hp731\Documents\GitHub\Competition\Arliss\Log1\receivearray"
 receivePhotoName = ""
 restorePhotoName = ""
 receivePhotoData = ['', '', '', '', '']
 receivePhotoNum = [0, 0, 0, 0, 0]
 
 def setSerial(mybaudrate=19200):
+    global com
     com = serial.Serial(
         port=comNum,
         baudrate=mybaudrate,
@@ -113,8 +115,9 @@ if __name__ == "__main__":
                 if(receivePhotoFlug == 1):
                     receivePhotoName = fileName(receivePhotoPath, 'jpg')
                     cv2.imwrite(receivePhotoName, array)
-                    receivePhotoArrayLog = fileName(receivePhotoArrayLogPath, 'txt')
-                    np.save('sample1_.npy', array)
+                   #receivePhotoArrayLog = fileName(receivePhotoArrayLogPath, 'txt')
+                    receivearray = fileName(receivearrayPath,"npy")
+                    np.save(receivearray, array)
                     receivePhotoFlug = 0
                     for i in range(len(array)):
                         for j in range(len(array[i])):
