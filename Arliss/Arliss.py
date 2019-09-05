@@ -487,6 +487,8 @@ if __name__ == "__main__":
 				time.sleep(1)
 			Motor.motor(-20, -20, 0.9)
 			Motor.motor(0, 0, 0,9)
+			Motor.motor(60, 60, 0.1, 1)
+			Motor.motor(0, 0, 2.0)
 			Motor.motor(15, 15, 0.9)
 			Motor.motor(0, 0, 0.9)
 
