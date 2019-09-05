@@ -112,7 +112,7 @@ gpsjudge = 0			#(for land)
 
 stuckFlug = 0
 stuckThd = 100
-PstuckCount = 30	
+PstuckCount = 30
 stuckCount = 100	#variable for stuck count
 stuckCountThd = 10	#variable for stuck thd
 LuxThd = 70			#variable for cover para
@@ -179,7 +179,7 @@ positionLog = 		"/home/pi/log/positionLog.txt"
 
 photopath = 		"/home/pi/photo/photo"
 photoName =			""
-airphoto =          ""	#Photo Path 
+airphoto =          ""	#Photo Path
 fileCal = 			""	#File Path for Calibration Log
 
 pi = pigpio.pi()	#object to set pigpio
@@ -197,6 +197,7 @@ def setup():
 	BME280.bme280_setup()
 	BME280.bme280_calib_param()
 	BMX055.bmx055_setup()
+	TSL2561.tsl2561_setup()
 	GPS.openGPS()
 
 	with open(phaseLog, 'a') as f:
