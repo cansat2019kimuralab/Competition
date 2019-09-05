@@ -730,6 +730,26 @@ if __name__ == "__main__":
 			print("Running Phase Finished")
 			IM920.Send("P7F")
 
+			# --- Set Rover toward Goal --- #
+			relAngStatus = 0
+			for i in range(30):
+				nAng = RunningGPS.calNAng(ellipseScale, angOffset)			#Calculate Rover Angle
+				disGoal, angGoal, rAng = RunningGPS.calGoal(nLat, nLon, gLat, gLon, nAng)
+				mPS = (-1) * rAng * 1.0 / 1.8
+				mPS = 60 if mPS > 60 else mPS
+				mPS = -60 if mPS < -60 else mPS
+				if(mPS > 0):
+					Motor.motor(mPS, 0, 0.1, 1)
+				else:
+					Motor.motor(0, -mPS, 0.1, 1)
+				if(math.fabs(rAng) <= 30):
+					relAngStatus = relAngStatus + 1
+					if(relAngStatus == 10):
+						break
+				else:
+					relAngStatus = 0
+				print(relAngStatus)
+
 		# ------------------- GoalDetection Phase ------------------- #
 		if(phaseChk <= 8):
 			Other.saveLog(phaseLog, "8", "GoalDetection Phase Started", time.time() - t_start)
