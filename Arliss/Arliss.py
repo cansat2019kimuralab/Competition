@@ -112,9 +112,9 @@ gpsjudge = 0			#(for land)
 
 stuckFlug = 0
 stuckThd = 100
-PstuckCount = 30
-stuckCount = 100
-stuckCountThd = 10
+PstuckCount = 30	
+stuckCount = 100	#variable for stuck count
+stuckCountThd = 10	#variable for stuck thd
 LuxThd = 70			#variable for cover para
 paraExsist = 0 		#variable for Para Detection    0:Not Exsist, 1:Exsist
 paracount = 0		#varable for para stuck
@@ -155,10 +155,10 @@ relAngStatus = 0					#Used for ParaExist
 startPosStatus = 0					#Start Position Check, 1: Necessary to Log, 0: Already Logged
 
 # --- variable for Goal Detection --- #
-mp_min = 15							#motor power for Low level
-mp_max = 65							#motor power fot High level
+mp_min = 10							#motor power for Low level
+mp_max = 60							#motor power fot High level
 mp_adj = -1							#adjust motor power
-adj_add = 10
+adj_add = 10						# adjust curve
 
 # --- variable of Log path --- #
 phaseLog =			"/home/pi/log/phaseLog.txt"
@@ -487,7 +487,9 @@ if __name__ == "__main__":
 				time.sleep(1)
 			Motor.motor(-20, -20, 0.9)
 			Motor.motor(0, 0, 0,9)
-			Motor.motor(15,15, 0.9)
+			Motor.motor(60, 60, 0.1, 1)
+			Motor.motor(0, 0, 2.0)
+			Motor.motor(15, 15, 0.9)
 			Motor.motor(0, 0, 0.9)
 
 			# --- Stuck Detection --- #
@@ -548,18 +550,23 @@ if __name__ == "__main__":
 					Motor.motor(0 ,0, 1)
 					Motor.motor(mp_max, mp_min, 1.0)
 					Motor.motor(0, 0, 1)
+					# --- check stuck --- #
+
 				# --- infront nothing --- #
 				if paraExsist == 0:
 					Motor.motor(mp_max, mp_max, 5)
 					Motor.motor(0 ,0, 1)
 					Motor.motor(-mp_max, -mp_max, 0.5)
 					Motor.motor(0 ,0, 1)
+					# --- check stuck --- #
+
 				# --- broken camera --- #
 				if paraExsist == -1:
 					Motor.motor(mp_max, mp_max, 5)
 					Motor.motor(0 ,0, 1)
 					Motor.motor(-mp_max, -mp_max, 0.5)
 					Motor.motor(0 ,0, 1)
+					# --- check stuck --- #
 
 				Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
 				Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), photoName, paraExsist, paraArea)
@@ -757,6 +764,9 @@ if __name__ == "__main__":
 						Motor.motor(80, -80, 3, 1)
 						Motor.motor(0, 0, 2)
 						stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
+					# --- check GPS --- #
+
+					
 					t_stuckDete_start = time.time()
 
 				# --- Get information --- #
@@ -771,7 +781,7 @@ if __name__ == "__main__":
 
 				# --- goal --- #
 				if goalFlug == 0:
-					Motor.motor(40, 40 + mp_adj, 0.4)
+					Motor.motor(40, 40 + mp_adj, 0.5)
 					Motor.motor(0, 0, 0.8)
 				# --- not detect --- #
 				elif goalFlug == -1:
@@ -801,12 +811,12 @@ if __name__ == "__main__":
 						# --- near the target --- #
 						if goalGAP < 0:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-							Motor.motor(mp_min, mp_max + MP + mp_adj, 0.6)
+							Motor.motor(mp_min, mp_max + MP + mp_adj, 0.5)
 							Motor.motor(0, 0, 0.8)
 							bomb = 1
 						else:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.6)
+							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.5)
 							Motor.motor(0, 0, 0.8)
 							bomb = 0
 				# --- broken camera --- #
