@@ -40,6 +40,7 @@ if __name__ == "__main__":
 			BME280.bme280_setup()
 			BME280.bme280_calib_param()
 			BMX055.bmx055_setup()
+			TSL2561.tsl2561_setup()
 
 			# --- Melting Check --- #
 			print("\n\nMelting Start")
