@@ -253,33 +253,33 @@ def transmitPhoto(sendimgName = ""):
 		IM920.Strt("2")  #distancemode
 		time.sleep(1)
 
-	def LongtransmitPhoto(sendimgName = ""):
-		global t_start
-		photo = ""
-		if sendimgName == "":
-			IM920.Strt("2") #distancemode!
-			time.sleep(1)
-			Motor.motor(15, 15, 0.9)
-			Motor.motor(0, 0, 1)
-			takePhoto()
-			print("Send Photo")
-			sendPhoto.sendPhoto(photoName)
-			print("Send Photo Finished")
-			Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
-			IM920.Strt("2")  #distancemode
-			time.sleep(1)
-		else:  # 1st time transmit
-			print("airphoto")
-			IM920.Strt("2") #distancemode!
-			time.sleep(1)
-			Motor.motor(15, 15, 0.9)
-			Motor.motor(0, 0, 1)
-			print("Send Photo")
-			sendPhoto.sendPhoto(sendimgName)
-			print("Send Photo Finished")
-			Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), sendimgName)
-			IM920.Strt("2")  #distancemode
-			time.sleep(1)
+def LongtransmitPhoto(sendimgName = ""):
+	global t_start
+	photo = ""
+	if sendimgName == "":
+		IM920.Strt("2") #distancemode!
+		time.sleep(1)
+		Motor.motor(15, 15, 0.9)
+		Motor.motor(0, 0, 1)
+		takePhoto()
+		print("Send Photo")
+		sendPhoto.sendPhoto(photoName)
+		print("Send Photo Finished")
+		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
+		IM920.Strt("2")  #distancemode
+		time.sleep(1)
+	else:  # 1st time transmit
+		print("airphoto")
+		IM920.Strt("2") #distancemode!
+		time.sleep(1)
+		Motor.motor(15, 15, 0.9)
+		Motor.motor(0, 0, 1)
+		print("Send Photo")
+		sendPhoto.sendPhoto(sendimgName)
+		print("Send Photo Finished")
+		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), sendimgName)
+		IM920.Strt("2")  #distancemode
+		time.sleep(1)
 
 def takePhoto():
 	global photoName
