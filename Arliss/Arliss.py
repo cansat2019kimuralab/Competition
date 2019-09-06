@@ -671,6 +671,7 @@ if __name__ == "__main__":
 						IM920.Send("D" + str(disGoal))
 						IM920.Send("A" + str(nAng))
 						IM920.Send("P7T")
+						beacon()
 						Motor.motor(0, 0, 2)
 						Motor.motor(30, 30, 0.5)
 						Motor.motor(0, 0, 0.5)
