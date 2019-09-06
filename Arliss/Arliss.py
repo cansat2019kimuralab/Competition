@@ -253,6 +253,34 @@ def transmitPhoto(sendimgName = ""):
 		IM920.Strt("2")  #distancemode
 		time.sleep(1)
 
+def LongtransmitPhoto(sendimgName = ""):
+	global t_start
+	photo = ""
+	if sendimgName == "":
+		IM920.Strt("2") #distancemode!
+		time.sleep(1)
+		Motor.motor(15, 15, 0.9)
+		Motor.motor(0, 0, 1)
+		takePhoto()
+		print("Send Photo")
+		sendPhoto.sendPhoto(photoName)
+		print("Send Photo Finished")
+		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), photoName)
+		IM920.Strt("2")  #distancemode
+		time.sleep(1)
+	else:  # 1st time transmit
+		print("airphoto")
+		IM920.Strt("2") #distancemode!
+		time.sleep(1)
+		Motor.motor(15, 15, 0.9)
+		Motor.motor(0, 0, 1)
+		print("Send Photo")
+		sendPhoto.sendPhoto(sendimgName)
+		print("Send Photo Finished")
+		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), sendimgName)
+		IM920.Strt("2")  #distancemode
+		time.sleep(1)
+
 def takePhoto():
 	global photoName
 	global gpsData
@@ -686,8 +714,8 @@ if __name__ == "__main__":
 						stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
 						if not (stuckMode[0] == 0):
 							Other.saveLog(stuckLog, time.time() - t_start, gpsData, stuckMode)
+							IM920.Send("P7K" + str(stuckMode[0]) + "	" + str(stuckMode[1]))
 							if(stuckMode[0] == 2):
-								IM920.Send("P7K" + str(stuckMode[0]) + "	" + str(stuckMode[1]))
 								# - Stuck -#
 								if(stuckMode[1] <= 3):
 									# - Stuck- #
@@ -710,6 +738,8 @@ if __name__ == "__main__":
 									Motor.motor(80, -80, 3)
 									Motor.motor(0, 0, 1)
 									Motor.motor(80, 80, 5)
+									if stuckMode[1] %3 ==0:
+										LongtransmitPhoto()
 							elif(stuckMode[0] == 1):
 								# - Roll Over - #
 								print("Roll Overed")
