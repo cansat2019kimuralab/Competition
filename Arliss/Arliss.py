@@ -146,7 +146,7 @@ nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
 rAng = 0.0							#Median of relAng [deg]
 mP, mPL, mPR, mPS = 0, 0, 0, 0		#Motor Power
-kpF = 0.03							#Proportional Gain when rover is far from goal
+kpF = 0.01							#Proportional Gain when rover is far from goal
 kpC = 0.4							#Proportional Gain when rover i close to goal
 kp = kpF
 stuckMode = [0, 0]					#Variable for Stuck
@@ -598,7 +598,11 @@ if __name__ == "__main__":
 				if(RunningGPS.checkGPSstatus(gpsData)):
 					nLat = gpsData[1]
 					nLon = gpsData[2]
+					# --- Save Log --- #
 					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+					Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+
+					#print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					#IM920.Send("G" + str(nLat) + "	" + str(nLon))
 
 				# --- Change Gain --- #
@@ -720,9 +724,6 @@ if __name__ == "__main__":
 					#rAng = relAng[0]
 					mPL, mPR, mPS = RunningGPS.runMotorSpeed(rAng, kp, maxMP)	#Calculate Motor Power
 
-					# --- Save Log --- #
-					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
-					Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					gpsData = GPS.readGPS()
 					Motor.motor(mPL, mPR, 0.06, 1)
 			Motor.motor(20, 20)
