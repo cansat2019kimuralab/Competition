@@ -139,15 +139,15 @@ ellipseScale = [13.871865096256819, 119.37576722002399, 0.8063121059825484, 0.75
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
-gLat, gLon = 35.92385, 139.913028	#Coordinates of Goal
+gLat, gLon = 39.608969, -119.217640	#Coordinates of Goal
 nLat, nLon = 0.0, 0.0		  		#Coordinates of That time
 rsLat, rsLon = 0.0, 0.0				#Coordinates of Running Start Position
 nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
 rAng = 0.0							#Median of relAng [deg]
 mP, mPL, mPR, mPS = 0, 0, 0, 0		#Motor Power
-kpF = 0.01							#Proportional Gain when rover is far from goal
-kpC = 0.4							#Proportional Gain when rover i close to goal
+kpF = 0.6							#Proportional Gain when rover is far from goal
+kpC = 0.6							#Proportional Gain when rover i close to goal
 kp = kpF
 stuckMode = [0, 0]					#Variable for Stuck
 maxMP = 70							#Maximum Motor Power
@@ -687,6 +687,7 @@ if __name__ == "__main__":
 						# --- Send Photo and Calibration--- #
 						Motor.motor(0, 0, 2)
 						transmitPhoto()
+						setup()
 
 						#Every [timeout_calibratoin] second,  Calibrate
 						print("Calibration")
