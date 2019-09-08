@@ -158,7 +158,7 @@ startPosStatus = 0					#Start Position Check, 1: Necessary to Log, 0: Already Lo
 mp_min = 10							#motor power for Low level
 mp_max = 60							#motor power fot High level
 mp_adj = -1							#adjust motor power
-adj_add = 10						# adjust curve
+adj_add = 10						#adjust curve
 
 # --- variable of Log path --- #
 phaseLog =			"/home/pi/log/phaseLog.txt"
@@ -209,7 +209,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	#phaseChk = 7
+	phaseChk = 7
 
 	if phaseChk == 0:
 		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
@@ -644,9 +644,6 @@ if __name__ == "__main__":
 				if(RunningGPS.checkGPSstatus(gpsData)):
 					nLat = gpsData[1]
 					nLon = gpsData[2]
-					# --- Save Log --- #
-					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
-					Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 
 					#print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					#IM920.Send("G" + str(nLat) + "	" + str(nLon))
@@ -657,7 +654,7 @@ if __name__ == "__main__":
 					maxMP = 40
 				else:
 					kp = kpF
-					maxMP = 70
+					maxMP = 60
 
 				# --- Taking Photo and Check Stuck--- #
 				if(time.time() - t_takePhoto_start > timeout_takePhoto):
@@ -775,7 +772,11 @@ if __name__ == "__main__":
 					mPL, mPR, mPS = RunningGPS.runMotorSpeed(rAng, kp, maxMP)	#Calculate Motor Power
 
 					gpsData = GPS.readGPS()
-					Motor.motor(mPL, mPR, 0.06, 1)
+					Motor.motor(mPL, mPR, 0.1, 1)
+
+					# --- Save Log --- #
+					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+					Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 
 			Motor.motor(20, 20)
 			Motor.motor(10, 10)
