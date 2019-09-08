@@ -15,7 +15,7 @@ from PIL import Image
 from matplotlib import pyplot as plt
 
 baudrate = 19200
-comNum = 'COM8'
+comNum = 'COM4'
 com = 0
 receptionLog = r"communicationLog1.txt"
 receptionDecrptionLog = r"communicationDecryptionLog1.txt"
@@ -67,7 +67,7 @@ def Reception(mybaudrate =19200):
             rssi = rssi[2]
             power= int(rssi,16) - 235
         else:
-            print("short ")
+            pass
         textData=textData.split(",")
         for x in textData:
             cngtext += chr(int(x,16))

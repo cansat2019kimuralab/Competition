@@ -15,18 +15,19 @@ from PIL import Image
 from matplotlib import pyplot as plt
 
 baudrate = 19200
-comNum = 'COM7'
+comNum = 'COM4'
 com = 0
-receptionLog = r"communicationLog.txt"
-receptionDecrptionLog = r"communicationDecryptionLog.txt"
-receivePhotoArrayLogPath = r"receivePhotoLog"
+receptionLog = r"communicationLog2.txt"
+receptionDecrptionLog = r"communicationDecryptionLog2.txt"
+receivePhotoArrayLogPath = r"receivePhotoLog2"
 receivePhotoArrayLog = ""
 array = [[[0]*3]*80]*60
 array = np.zeros_like(array)
 I = list(range(5))
 receivePhotoFlug = 0
-receivePhotoPath = "receivePhoto"
-restorePhotoPath = "restorePhoto"
+receivePhotoPath = r"2receivePhoto"
+restorePhotoPath = r"2restorePhoto"
+receivearrayPath = r"2receivearray"
 receivePhotoName = ""
 restorePhotoName = ""
 receivePhotoData = ['', '', '', '', '']
@@ -57,22 +58,23 @@ def Reception(mybaudrate =19200):
         power=""
         text = com.readline().decode('utf-8').strip()
         com.flushOutput()
+        #print(text)
         text = text.replace("\r\n","")
         textData = text.split(":")[1]
         rssi  =text.split(":")[0]
-        rssi = rssi.split(",")
+        rssi=rssi.split(",")
         if len(rssi)==3:
             rssi = rssi[2]
-            power = int(rssi,16) - 235
+            power= int(rssi,16) - 235
         else:
             pass
-        textData = textData.split(",")
+        textData=textData.split(",")
         for x in textData:
             cngtext += chr(int(x,16))
-        power = int(rssi,16) - 235
     except Exception:
+        print(text)
         cngtext = ""
-        #print(traceback.format_exc())
+       # print(traceback.format_exc())
     return text, cngtext, power 
 
 def saveLog(path, *data):
@@ -113,8 +115,9 @@ if __name__ == "__main__":
                 if(receivePhotoFlug == 1):
                     receivePhotoName = fileName(receivePhotoPath, 'jpg')
                     cv2.imwrite(receivePhotoName, array)
-                    receivePhotoArrayLog = fileName(receivePhotoArrayLogPath, 'txt')
-                    np.save('sample_.npy', array)
+                   #receivePhotoArrayLog = fileName(receivePhotoArrayLogPath, 'txt')
+                    receivearray = fileName(receivearrayPath,"npy")
+                    np.save(receivearray, array)
                     receivePhotoFlug = 0
                     for i in range(len(array)):
                         for j in range(len(array[i])):
@@ -156,7 +159,7 @@ if __name__ == "__main__":
                         receivePhotoData[i] = '0'
                     receivePhotoNum[i] = int(receivePhotoData[i])
 
-                print(receivePhotoNum)
+                print(str(power)+"dbm      "+str(receivePhotoNum))
                 for i in range(3):
                     array[receivePhotoNum[0]][receivePhotoNum[1]][i] = receivePhotoNum[i+2]
     except:
