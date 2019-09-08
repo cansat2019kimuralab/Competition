@@ -174,7 +174,7 @@ missionLog = 		"/home/pi/log/missionLog.txt"
 calibrationLog = 	"/home/pi/log/calibrationLog"
 sendPhotoLog = 		"/home/pi/log/sendPhotoLog.txt"
 stuckLog = 			"/home/pi/log/stuckLog.txt"
-errorLog = 			"/home/pi/log/erroLog.txt"
+errorLog = 			"/home/pi/log/errorLog.txt"
 positionLog = 		"/home/pi/log/positionLog.txt"
 
 photopath = 		"/home/pi/photo/photo"
@@ -228,6 +228,11 @@ def setup():
 def transmitPhoto(sendimgName = ""):
 	global t_start
 	photo = ""
+	
+	IM920.Send("G" + str(nLat) + "	" + str(nLon))
+	IM920.Send("G" + str(nLat) + "	" + str(nLon))
+	IM920.Send("G" + str(nLat) + "	" + str(nLon))
+
 	if sendimgName == "":
 		IM920.Strt("1") #fastmode
 		time.sleep(1)
@@ -253,9 +258,18 @@ def transmitPhoto(sendimgName = ""):
 		IM920.Strt("2")  #distancemode
 		time.sleep(1)
 
+	IM920.Send("G" + str(nLat) + "	" + str(nLon))
+	IM920.Send("G" + str(nLat) + "	" + str(nLon))
+	IM920.Send("G" + str(nLat) + "	" + str(nLon))
+
 def LongtransmitPhoto(sendimgName = ""):
 	global t_start
 	photo = ""
+	
+	IM920.Send("G" + str(nLat) + "	" + str(nLon))
+	IM920.Send("G" + str(nLat) + "	" + str(nLon))
+	IM920.Send("G" + str(nLat) + "	" + str(nLon))
+
 	if sendimgName == "":
 		IM920.Strt("2") #distancemode!
 		time.sleep(1)
@@ -280,6 +294,10 @@ def LongtransmitPhoto(sendimgName = ""):
 		Other.saveLog(sendPhotoLog, time.time() - t_start, GPS.readGPS(), sendimgName)
 		IM920.Strt("2")  #distancemode
 		time.sleep(1)
+
+	IM920.Send("G" + str(nLat) + "	" + str(nLon))
+	IM920.Send("G" + str(nLat) + "	" + str(nLon))
+	IM920.Send("G" + str(nLat) + "	" + str(nLon))
 
 def takePhoto():
 	global photoName
@@ -641,6 +659,59 @@ if __name__ == "__main__":
 					kp = kpF
 					maxMP = 70
 
+				# --- Taking Photo and Check Stuck--- #
+				if(time.time() - t_takePhoto_start > timeout_takePhoto):
+					IM920.Send("G" + str(nLat) + "	" + str(nLon))
+					IM920.Send("D" + str(disGoal))
+					IM920.Send("A" + str(nAng))
+					IM920.Send("P7T")
+					beacon()
+					Motor.motor(0, 0, 2)
+					Motor.motor(30, 30, 0.5)
+					Motor.motor(0, 0, 0.5)
+
+					# --- Take Photo --- #
+					takePhoto()
+
+					# --- Read GPS Data --- #
+					readGPSdata()
+
+					# --- Check Stuck Mode --- #
+					stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
+					if not (stuckMode[0] == 0):
+						Other.saveLog(stuckLog, time.time() - t_start, gpsData, stuckMode)
+						IM920.Send("P7K" + str(stuckMode[0]) + "	" + str(stuckMode[1]))
+						if(stuckMode[0] == 2):
+							# - Stuck -#
+							if(stuckMode[1] <= 3):
+								# - Stuck- #
+								print("Stuck" + str(stuckMode))
+								Motor.motor(80, 80, 4, 1)
+								Motor.motor(60, 60, 1)
+							elif(stuckMode[1] <= 5):
+								# - Stuck Many Time - #
+								print("Stuck" + str(stuckMode))
+								Motor.motor(-30, -30, 1)
+								Motor.motor(-60, -60, 3, 1)
+								Motor.motor(0, 0, 1)
+								Motor.motor(60, -60, 5)
+								Motor.motor(0, 0, 1)
+							else:
+								# - Stuck Many Many Time - #
+								print("Stuck" + str(stuckMode))
+								Motor.motor(-80, -80, 5)
+								Motor.motor(0, 0, 1)
+								Motor.motor(80, -80, 3)
+								Motor.motor(0, 0, 1)
+								Motor.motor(80, 80, 5)
+								if stuckMode[1] %6 ==0:
+									LongtransmitPhoto()
+						elif(stuckMode[0] == 1):
+							# - Roll Over - #
+							print("Roll Overed")
+							IM920.Send("P7R")
+					t_takePhoto_start = time.time()
+
 				disStart = RunningGPS.calGoal(nLat, nLon, rsLat, rsLon, nAng)
 				if(disStart[0] <= 10):
 					print("10m from Start Position", disStart)
@@ -694,59 +765,6 @@ if __name__ == "__main__":
 						ellipseScale = calibration()
 						t_calib_origin = time.time()
 
-					# --- Taking Photo and Check Stuck--- #
-					if(time.time() - t_takePhoto_start > timeout_takePhoto):
-						IM920.Send("G" + str(nLat) + "	" + str(nLon))
-						IM920.Send("D" + str(disGoal))
-						IM920.Send("A" + str(nAng))
-						IM920.Send("P7T")
-						beacon()
-						Motor.motor(0, 0, 2)
-						Motor.motor(30, 30, 0.5)
-						Motor.motor(0, 0, 0.5)
-
-						# --- Take Photo --- #
-						takePhoto()
-
-						# --- Read GPS Data --- #
-						readGPSdata()
-
-						# --- Check Stuck Mode --- #
-						stuckMode = Stuck.stuckDetection(gpsData[1], gpsData[2])
-						if not (stuckMode[0] == 0):
-							Other.saveLog(stuckLog, time.time() - t_start, gpsData, stuckMode)
-							IM920.Send("P7K" + str(stuckMode[0]) + "	" + str(stuckMode[1]))
-							if(stuckMode[0] == 2):
-								# - Stuck -#
-								if(stuckMode[1] <= 3):
-									# - Stuck- #
-									print("Stuck" + str(stuckMode))
-									Motor.motor(80, 80, 4, 1)
-									Motor.motor(60, 60, 1)
-								elif(stuckMode[1] <= 5):
-									# - Stuck Many Time - #
-									print("Stuck" + str(stuckMode))
-									Motor.motor(-30, -30, 1)
-									Motor.motor(-60, -60, 3, 1)
-									Motor.motor(0, 0, 1)
-									Motor.motor(60, -60, 5)
-									Motor.motor(0, 0, 1)
-								else:
-									# - Stuck Many Many Time - #
-									print("Stuck" + str(stuckMode))
-									Motor.motor(-80, -80, 5)
-									Motor.motor(0, 0, 1)
-									Motor.motor(80, -80, 3)
-									Motor.motor(0, 0, 1)
-									Motor.motor(80, 80, 5)
-									if stuckMode[1] %6 ==0:
-										LongtransmitPhoto()
-							elif(stuckMode[0] == 1):
-								# - Roll Over - #
-								print("Roll Overed")
-								IM920.Send("P7R")
-						t_takePhoto_start = time.time()
-
 					# --- Calculate disGoal and relAng and Motor Power --- #
 					nAng = RunningGPS.calNAng(ellipseScale, angOffset)			#Calculate Rover Angle
 					relAng[2] = relAng[1]
@@ -758,6 +776,7 @@ if __name__ == "__main__":
 
 					gpsData = GPS.readGPS()
 					Motor.motor(mPL, mPR, 0.06, 1)
+
 			Motor.motor(20, 20)
 			Motor.motor(10, 10)
 			Motor.motor(0, 0, 1)
