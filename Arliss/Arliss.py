@@ -739,7 +739,7 @@ if __name__ == "__main__":
 									Motor.motor(80, -80, 3)
 									Motor.motor(0, 0, 1)
 									Motor.motor(80, 80, 5)
-									if stuckMode[1] %3 ==0:
+									if stuckMode[1] %6 ==0:
 										LongtransmitPhoto()
 							elif(stuckMode[0] == 1):
 								# - Roll Over - #
