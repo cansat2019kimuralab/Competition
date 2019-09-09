@@ -425,6 +425,7 @@ if __name__ == "__main__":
 				elif luxreleasejudge == 2 or pressreleasejudge == 2: #when i2c is dead
 					photoreleasejudge,fcount=Release.photoreleasedetect(photoName,photoreleaseThd)
 					if photoreleasejudge == 1:
+						Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by camera", luxreleasejudge, pressreleasejudge, photoreleasejudge)
 						print("Rover has release by photojudge")
 						break
 					elif photoreleasejudge == 0:
