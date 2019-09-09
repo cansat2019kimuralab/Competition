@@ -324,7 +324,7 @@ def calibration():
 
 	print("Calibration Start")
 	IM920.Send("P7C")
-	Motor.motor(0, 30, 1)
+	Motor.motor(30, 0, 1)
 	t_cal_start = time.time()
 	while(math.fabs(roll) <= 600):
 		if(time.time() - t_cal_start >= 10):
@@ -335,7 +335,7 @@ def calibration():
 			Other.saveLog(stuckLog, time.time() - t_start, GPS.readGPS(), 3, 0)
 			Other.saveLog(fileCal, time.time() - t_start, "Calibration Failed")
 			break
-		mPL, mPR, mPS, bmx055data = pidControl.pidSpin(300, 1.0, 1.1, 0.2, dt)
+		mPL, mPR, mPS, bmx055data = pidControl.pidSpin(-300, 1.0, 1.1, 0.2, dt)
 		with open(fileCal, 'a') as f:
 			for i in range(6, 8):
 				#print(str(bmx055data[i]) + "\t", end="")
