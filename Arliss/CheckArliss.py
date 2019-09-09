@@ -51,13 +51,14 @@ if __name__ == "__main__":
 			com1Data = IM920.Send("P" + str(1))
 			IM920.Strt("2")
 			com2Data = IM920.Send("P" + str(2))
-			print("GPS", gpsData)
-			print("TSL2561", luxData)
-			print("BME280", bmeData)
-			print("BMX055", bmxData)
-			print("photo", photo)
-			print("fast mode", com1Data)
-			print("distance mode", com2Data)
+			print("GPS\t\t", gpsData)
+			print("TSL2561\t\t", luxData)
+			print("BME280\t\t", bmeData)
+			print("BMX055\t\t", bmxData)
+			print("photo\t\t", photo)
+			print("fast mode\t", com1Data)
+			print("distance mode\t", com2Data)
+			print("\n\n")
 
 		"""
 		for j in range(1):
