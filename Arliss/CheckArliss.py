@@ -34,6 +34,7 @@ tsl2561Log = "log/checkTSL2561Log.txt"
 
 if __name__ == "__main__":
 	try:
+		"""
 		for j in range(1):
 			pi.write(22, 1)
 			GPS.openGPS()
@@ -101,6 +102,32 @@ if __name__ == "__main__":
 			for i in range(10): #IM920
 				data = IM920.Send("P" + str(i))
 				print("distancemode\t"+str(data))
+		"""
+
+		pi.write(22, 1)
+		GPS.openGPS()
+		BME280.bme280_setup()
+		BME280.bme280_calib_param()
+		BMX055.bmx055_setup()
+		TSL2561.tsl2561_setup()
+
+		for i in range(1):
+			gpsData = GPS.readGPS()
+			luxData = TSL2561.readLux()
+			bmeData = BME280.bme280_read()
+			bmxData = BMX055.bmx055_read()
+			photo = Capture.Capture("photo/photo")
+			IM920.Strt("1")
+			com1Data = IM920.Send("P" + str(1))
+			IM920.Strt("2")
+			com2Data = IM920.Send("P" + str(2))
+			print("GPS", gpsData)
+			print("TSL2561", luxData)
+			print("BME280", bmeData)
+			print("BMX055", bmxData)
+			print("photo", photo)
+			print("fast mode", com1Data)
+			print("distance mode", com2Data)
 	except:
 		pi.write(17, 0)
 		Motor.motor(0, 0, 1)
