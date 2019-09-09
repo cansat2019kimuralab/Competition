@@ -57,8 +57,8 @@ phaseChk = 0	#variable for phase Check
 # --- variable of time setting --- #
 t_start  = 0.0				#time when program started
 t_sleep = 3				#time for sleep phase
-t_release = 120				#time for release(loopx)
-t_land = 210				#time for land(loopy)
+t_release = 5400			#time for release(loopx)
+t_land = 1200				#time for land(loopy)
 t_melt = 5					#time for melting
 t_transmit = 30				#time for transmit limit
 t_sleep_start = 0			#time for sleep origin
