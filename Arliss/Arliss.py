@@ -56,7 +56,7 @@ phaseChk = 0	#variable for phase Check
 
 # --- variable of time setting --- #
 t_start  = 0.0				#time when program started
-t_sleep = 3				#time for sleep phase
+t_sleep = 600				#time for sleep phase
 t_release = 5400			#time for release(loopx)
 t_land = 1200				#time for land(loopy)
 t_melt = 5					#time for melting
@@ -70,12 +70,14 @@ t_paraDete_start = 0
 t_takePhoto_start = 0		#time for taking photo
 t_goalDete_start = 0
 t_stuckDete_start = 0
+t_afterGoal_start = 0
 timeout_calibration = 180	#time for calibration timeout
 timeout_parachute = 60
 timeout_takePhoto = 30		#time for taking photo timeout
 timeout_sendPhoto = 120		#time for sending photo timeout
-timeout_goalDete = 300
-timeout_stuck = 180
+timeout_goalDete = 600
+timeout_stuck = 300
+timeout_afterGoal = 300
 
 # --- variable for storing sensor data --- #
 gpsData = [0.0,0.0,0.0,0.0,0.0]						#variable to store GPS data
@@ -93,7 +95,7 @@ mcount = 0			#Magnet count
 plcount = 0
 
 # --- variable for Judgement (release Thd)--- #
-luxreleaseThd = 100
+luxreleaseThd = 1000
 pressreleaseThd = 0.3
 photoreleaseThd = 100
 
@@ -115,7 +117,7 @@ stuckThd = 100
 PstuckCount = 30
 stuckCount = 100	#variable for stuck count
 stuckCountThd = 10	#variable for stuck thd
-LuxThd = 70			#variable for cover para
+LuxThd = 2000		#variable for cover para
 paraExsist = 0 		#variable for Para Detection    0:Not Exsist, 1:Exsist
 paracount = 0		#varable for para stuck
 goalFlug = -1		#variable for GoalDetection		-1:Not Detect, 0:Goal, 1:Detect
@@ -123,9 +125,9 @@ goalBufFlug = -1	#variable for GoalDetection buf
 goalArea = 0		#variable for goal area
 goalGAP = -1		#variable for goal gap
 goalthd = 12000		#variable for goal area thd
-H_min = 200			#Hue minimam
-H_max = 10			#Hue maximam
-S_thd = 130			#Saturation threshold
+H_min = 220			#Hue minimam
+H_max = 20			#Hue maximam
+S_thd = 80			#Saturation threshold
 bomb = 0			#use for goalDete flug
 
 # --- variable for Transmit --- #
@@ -135,7 +137,7 @@ count = 0			#valiable for transmit count
 amari = 0
 
 # --- variable for Running --- #
-ellipseScale = [13.871865096256819, 119.37576722002399, 0.8063121059825484, 0.758821948664667] #Convert coefficient Ellipse to Circle
+ellipseScale = [35.4576763891607, 32.05240614082687, 0.58703801524424, 0.6268972485409475] #Convert coefficient Ellipse to Circle
 disGoal = 100.0						#Distance from Goal [m]
 angGoal = 0.0						#Angle toword Goal [deg]
 angOffset = -77.0					#Angle Offset towrd North [deg]
@@ -146,7 +148,7 @@ nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
 rAng = 0.0							#Median of relAng [deg]
 mP, mPL, mPR, mPS = 0, 0, 0, 0		#Motor Power
-kpF = 0.4							#Proportional Gain when rover is far from goal
+kpF = 0.3							#Proportional Gain when rover is far from goal
 kpC = 0.6							#Proportional Gain when rover i close to goal
 kp = kpF
 stuckMode = [0, 0]					#Variable for Stuck
@@ -156,8 +158,8 @@ startPosStatus = 0					#Start Position Check, 1: Necessary to Log, 0: Already Lo
 
 # --- variable for Goal Detection --- #
 mp_min = 10							#motor power for Low level
-mp_max = 60							#motor power fot High level
-mp_adj = -1							#adjust motor power
+mp_max = 40							#motor power fot High level
+mp_adj = -3							#adjust motor power
 adj_add = 10						#adjust curve
 
 # --- variable of Log path --- #
@@ -209,7 +211,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 7
+	#phaseChk = 8
 
 	if phaseChk == 0:
 		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
@@ -351,6 +353,7 @@ def calibration():
 		Other.saveLog(fileCal, time.time() - t_start)
 
 	Motor.motor(0, 0, 1)
+	setup()
 	print("Calibration Finished")
 	return calData
 
@@ -846,7 +849,7 @@ if __name__ == "__main__":
 
 				# --- Get information --- #
 				Motor.motor(0, 0, 2)
-				Motor.motor(15,15, 0.6)
+				Motor.motor(15,15, 0.9)
 				Motor.motor(0, 0, 1.0)
 				goalFlug, goalArea, goalGAP, photoName = goal_detection.GoalDetection(photopath, H_min, H_max, S_thd, goalthd)
 				print("flug", goalFlug, "area", goalArea, "GAP", goalGAP)
@@ -861,11 +864,11 @@ if __name__ == "__main__":
 				# --- not detect --- #
 				elif goalFlug == -1:
 					if bomb == 1:
-						Motor.motor(mp_max, mp_min + mp_adj, 0.6)
+						Motor.motor(mp_max, mp_min + mp_adj, 0.4)
 						Motor.motor(0, 0, 0.8)
 						bomb = 1
 					else:
-						Motor.motor(mp_min, mp_max + mp_adj, 0.6)
+						Motor.motor(mp_min, mp_max + mp_adj, 0.4)
 						Motor.motor(0, 0, 0.8)
 						bomb = 0
 				# --- detect but no goal --- #
@@ -886,12 +889,12 @@ if __name__ == "__main__":
 						# --- near the target --- #
 						if goalGAP < 0:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-							Motor.motor(mp_min, mp_max + MP + mp_adj, 0.5)
+							Motor.motor(mp_min, mp_max + MP + mp_adj, 0.4)
 							Motor.motor(0, 0, 0.8)
 							bomb = 1
 						else:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.5)
+							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.4)
 							Motor.motor(0, 0, 0.8)
 							bomb = 0
 				# --- broken camera --- #
@@ -906,15 +909,25 @@ if __name__ == "__main__":
 				IM920.Send("P8D")
 			print("Goal Detection Phase Finished")
 			IM920.Send("P8F")
-
+			t_afterGoal_start = time.time()
+			while(time.time() - t_afterGoal_start < timeout_afterGoal):
+				IM920.Send("P8W")
+				time.sleep(1)
+			
 		# ------------------- Sending Photo Phase ------------------- #
 		if(phaseChk <= 9):
 			Other.saveLog(phaseLog, "9", "Sending Photo Phase Started", time.time() - t_start)
 			print("\nSending Photo Phase Started")
 			IM920.Send("P9S")
-			for i in range(3):
+			Motor.motor(-60, -60, 5)
+			Motor.motor(0, 0, 1)
+			Motor.motor(30, 30, 1)
+			Motor.motor(0, 0, 1)
+			Motor.motor(30, 0, 1)
+			Motor.motor(0, 0, 1)
+			for i in range(10):
 				IM920.Send("P9D")
-				transmitPhoto()
+				LongtransmitPhoto()
 				time.sleep(1)
 				IM920.Send("P9D")
 			print("Sending Photo Phase Finished")
@@ -939,5 +952,5 @@ if __name__ == "__main__":
 		Other.saveLog(errorLog, traceback.format_exc())
 		Other.saveLog(errorLog, "\n")
 		IM920.Send("EO")
-		#os.system('sudo reboot')
+		os.system('sudo reboot')
 		close()
