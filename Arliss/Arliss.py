@@ -30,7 +30,6 @@ import serial
 import time
 import traceback
 
-
 import BMX055
 import BME280
 import Capture
