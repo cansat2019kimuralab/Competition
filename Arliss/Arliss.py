@@ -129,6 +129,7 @@ H_min = 220			#Hue minimam
 H_max = 20			#Hue maximam
 S_thd = 80			#Saturation threshold
 bomb = 0			#use for goalDete flug
+fuck = 0
 
 # --- variable for Transmit --- #
 mode = 1			#valiable for transmit mode
@@ -160,7 +161,7 @@ startPosStatus = 0					#Start Position Check, 1: Necessary to Log, 0: Already Lo
 mp_min = 10							#motor power for Low level
 mp_max = 40							#motor power fot High level
 mp_adj = -3							#adjust motor power
-adj_add = 10						#adjust curve
+adj_add = 8						#adjust curve
 
 # --- variable of Log path --- #
 phaseLog =			"/home/pi/log/phaseLog.txt"
@@ -211,7 +212,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	#phaseChk = 8
+	phaseChk = 8
 
 	if phaseChk == 0:
 		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
@@ -830,7 +831,7 @@ if __name__ == "__main__":
 			IM920.Send("P8S")
 
 			# --- Transmit Image --- #
-			transmitPhoto()
+			#transmitPhoto()
 
 			t_goalDete_start = time.time()
 			t_stuckDete_start = time.time()
@@ -878,28 +879,42 @@ if __name__ == "__main__":
 					Motor.motor(0, 0, 0.8)
 				# --- not detect --- #
 				elif goalFlug == -1:
-					if bomb == 1:
-						Motor.motor(mp_max, mp_min + mp_adj, 0.4)
-						Motor.motor(0, 0, 0.8)
-						bomb = 1
+					if fuck == 0:
+						if bomb == 1:
+							Motor.motor(mp_max, -mp_max, 0.13, 1)
+							Motor.motor(0, 0, 1.0)
+							bomb = 1
+						else:
+							Motor.motor(-mp_max, mp_max, 0.13, 1)
+							Motor.motor(0, 0, 1.0)
+							bomb = 0
 					else:
-						Motor.motor(mp_min, mp_max + mp_adj, 0.4)
-						Motor.motor(0, 0, 0.8)
-						bomb = 0
+						if bomb == 1:
+							Motor.motor(mp_max, mp_min + mp_adj, 0.4)
+							Motor.motor(0, 0, 1.0)
+							bomb = 1
+							fuck = 1
+						else:
+							Motor.motor(mp_min, mp_max + mp_adj, 0.4)
+							Motor.motor(0, 0, 1.0)
+							bomb = 0
+							fuck = 1
 				# --- detect but no goal --- #
 				elif goalFlug < 100:
 					# --- target left --- #
 					if goalArea < 7000 and goalArea > 0 and goalGAP < 0:
 						MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-						Motor.motor(mp_max - MP, mp_max + mp_adj, 0.6)
+						Motor.motor(mp_max, mp_max + mp_adj + MP, 0.8)
 						Motor.motor(0, 0, 0.8)
 						bomb = 1
+						fuck = 0
 					# --- target right --- #
 					elif goalArea < 7000 and goalArea > 0 and goalGAP >= 0:
 						MP = goal_detection.curvingSwitch(goalGAP, adj_add)
-						Motor.motor(mp_max, mp_max - MP + mp_adj, 0.6)
+						Motor.motor(mp_max + MP, mp_max + mp_adj, 0.8)
 						Motor.motor(0, 0, 0.8)
 						bomb = 0
+						fuck = 0
 					else:
 						# --- near the target --- #
 						if goalGAP < 0:
@@ -907,11 +922,13 @@ if __name__ == "__main__":
 							Motor.motor(mp_min, mp_max + MP + mp_adj, 0.4)
 							Motor.motor(0, 0, 0.8)
 							bomb = 1
+							fuck = 1
 						else:
 							MP = goal_detection.curvingSwitch(goalGAP, adj_add)
 							Motor.motor(mp_max + MP, mp_min + mp_adj, 0.4)
 							Motor.motor(0, 0, 0.8)
 							bomb = 0
+							fuck = 1
 				# --- broken camera --- #
 				elif goalFlug > 105:
 					goalFlug = 0
