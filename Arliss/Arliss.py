@@ -212,7 +212,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 8
+	#phaseChk = 8
 
 	if phaseChk == 0:
 		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
