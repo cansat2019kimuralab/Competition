@@ -56,7 +56,7 @@ phaseChk = 0	#variable for phase Check
 
 # --- variable of time setting --- #
 t_start  = 0.0				#time when program started
-t_sleep = 600				#time for sleep phase
+t_sleep = 900				#time for sleep phase
 t_release = 5400			#time for release(loopx)
 t_land = 1200				#time for land(loopy)
 t_melt = 5					#time for melting
@@ -438,6 +438,7 @@ if __name__ == "__main__":
 					#print("Rover is in rocket")
 					#IM920.Send("P3D")
 
+				# --- Save Log and Take Photo --- #
 				print("l" + str(lcount) + "  a" + str(acount) + "  f" + str(fcount))
 				if(i % 10 == 0):
 					takePhoto()
@@ -445,10 +446,8 @@ if __name__ == "__main__":
 				else:
 					i = i + 1
 					time.sleep(1)
-				# --- Save Log and Take Photo --- #
-				takePhoto()
 				Other.saveLog(releaseLog, time.time() - t_start, lcount, acount, fcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
-				
+
 				#IM920.Send("P3D")
 			else:
 				Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Timeout")
@@ -764,6 +763,8 @@ if __name__ == "__main__":
 						Motor.motor(-60, -50, 2)
 						Motor.motor(-60, -60, 3)
 					Motor.motor(0, 0, 1)
+					Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
+					Other.saveLog(paraAvoidanceLog, time.time() - t_start, GPS.readGPS(), photoName, paraExsist, paraArea)
 
 					# --- Get GPS Data --- #
 					readGPSdata()
