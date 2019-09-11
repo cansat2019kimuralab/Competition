@@ -77,7 +77,7 @@ timeout_takePhoto = 30		#time for taking photo timeout
 timeout_sendPhoto = 120		#time for sending photo timeout
 timeout_goalDete = 600
 timeout_stuck = 300
-timeout_afterGoal = 300
+timeout_afterGoal = 10
 
 # --- variable for storing sensor data --- #
 gpsData = [0.0,0.0,0.0,0.0,0.0]						#variable to store GPS data
@@ -361,7 +361,7 @@ def readGPSdata():
 	global gpsData
 	global nLat, nLon
 
-	print("Read GPS Data")
+	#print("Read GPS Data")
 	gpsData = GPS.readGPS()
 	while(not RunningGPS.checkGPSstatus(gpsData)):
 		gpsData = GPS.readGPS()
@@ -403,10 +403,8 @@ if __name__ == "__main__":
 			# --- Sleep --- #
 			while(time.time() - t_sleep_start <= t_sleep):
 				Other.saveLog(sleepLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), TSL2561.readLux(), BMX055.bmx055_read())
-				takePhoto()
-				time.sleep(1)
-				#IM920.Send("P2D")
-			#IM920.Send("P2F")
+				#takePhoto()
+				time.sleep(10)
 
 		# ------------------- Release Phase ------------------- #
 		if(phaseChk <= 3):
@@ -416,6 +414,7 @@ if __name__ == "__main__":
 			#IM920.Send("P3S")
 
 			# --- Release Judgement, "while" is for timeout --- #
+			i = 0
 			while (time.time() - t_release_start <= t_release):
 				luxreleasejudge,lcount = Release.luxdetect(luxreleaseThd)
 				pressreleasejudge,acount = Release.pressdetect(pressreleaseThd)
@@ -426,22 +425,30 @@ if __name__ == "__main__":
 					airphoto = Capture.Capture(photopath)
 					break
 				elif luxreleasejudge == 2 or pressreleasejudge == 2: #when i2c is dead
-					photoreleasejudge,fcount=Release.photoreleasedetect(photoName,photoreleaseThd)
+					photoreleasejudge,fcount = Release.photoreleasedetect(photoName,photoreleaseThd)
 					if photoreleasejudge == 1:
 						Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by camera", luxreleasejudge, pressreleasejudge, photoreleasejudge)
 						print("Rover has release by photojudge")
 						break
 					elif photoreleasejudge == 0:
-						print("i2c is dead!")
+						print("I2C is dead!")
+						pass
 				else:
 					pass
 					#print("Rover is in rocket")
 					#IM920.Send("P3D")
-				print("l"+str(lcount)+"  a"+ str(acount)+"  f"+str(fcount))
+
+				print("l" + str(lcount) + "  a" + str(acount) + "  f" + str(fcount))
+				if(i % 10 == 0):
+					takePhoto()
+					i = 1
+				else:
+					i = i + 1
+					time.sleep(1)
 				# --- Save Log and Take Photo --- #
-				#gpsData = GPS.readGPS()
 				takePhoto()
 				Other.saveLog(releaseLog, time.time() - t_start, lcount, acount, fcount, gpsData, TSL2561.readLux(), BME280.bme280_read(), BMX055.bmx055_read())
+				
 				#IM920.Send("P3D")
 			else:
 				Other.saveLog(releaseLog, time.time() - t_start, "Release Judged by Timeout")
@@ -458,6 +465,7 @@ if __name__ == "__main__":
 			t_land_start = time.time()
 
 			# --- Landing Judgement, "while" is for timeout --- #
+			i = 0
 			while(time.time() - t_land_start <= t_land):
 				presslandjudge, pcount = Land.pressdetect(presslandThd)
 				gyrolandjudge, mcount = Land.bmxdetect(gyrolandThd)
@@ -465,7 +473,6 @@ if __name__ == "__main__":
 					Other.saveLog(landingLog, time.time() - t_start, "Land Judged by Sensor", presslandjudge, gyrolandjudge )
 					print("Rover has Landed")
 					break
-
 				elif presslandjudge == 2 or gyrolandjudge == 2: #when i2c is dead
 					photolandjudge, plcount = Land.photolanddetect(photolandThd)
 					if photolandjudge == 1:
@@ -479,14 +486,21 @@ if __name__ == "__main__":
 					#print("Land judge now")
 
 				print("p"+str(pcount)+"  m"+str(mcount)+" pl"+str(plcount))
-				# --- Save Log and Take Photo--- #
-				for i in range(3):
-					#gpsData = GPS.readGPS()
+
+				# --- Save Log and Take Photo--- #					
+				Other.saveLog(landingLog ,time.time() - t_start, pcount, mcount, plcount, gpsData, BME280.bme280_read(), BMX055.bmx055_read())
+				if(i % 5 == 0):
 					takePhoto()
-					Other.saveLog(landingLog ,time.time() - t_start, pcount, mcount, plcount, gpsData, BME280.bme280_read(), BMX055.bmx055_read())
+					i = 1
+					time.sleep(2)
+				else:
+					i = i + 1
+					time.sleep(3)
+
 				if RunningGPS.checkGPSstatus(gpsData) == 1:
 					nLat = gpsData[1]
 					nLon = gpsData[2]
+
 				IM920.Send("G	"+str(nLat)+"	"+str(nLon))
 				IM920.Send("P4	"+str(pcount)+"	"+str(mcount))
 				beacon()
@@ -919,12 +933,6 @@ if __name__ == "__main__":
 			Other.saveLog(phaseLog, "9", "Sending Photo Phase Started", time.time() - t_start)
 			print("\nSending Photo Phase Started")
 			IM920.Send("P9S")
-			Motor.motor(-60, -60, 5)
-			Motor.motor(0, 0, 1)
-			Motor.motor(30, 30, 1)
-			Motor.motor(0, 0, 1)
-			Motor.motor(30, 0, 1)
-			Motor.motor(0, 0, 1)
 			for i in range(10):
 				IM920.Send("P9D")
 				LongtransmitPhoto()
@@ -952,5 +960,5 @@ if __name__ == "__main__":
 		Other.saveLog(errorLog, traceback.format_exc())
 		Other.saveLog(errorLog, "\n")
 		IM920.Send("EO")
-		os.system('sudo reboot')
+		#os.system('sudo reboot')
 		close()
