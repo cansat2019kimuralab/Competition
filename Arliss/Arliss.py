@@ -57,7 +57,7 @@ phaseChk = 0	#variable for phase Check
 # --- variable of time setting --- #
 t_start  = 0.0				#time when program started
 t_sleep = 900				#time for sleep phase
-t_release = 5400			#time for release(loopx)
+t_release = 3600			#time for release(loopx)
 t_land = 1200				#time for land(loopy)
 t_melt = 5					#time for melting
 t_transmit = 30				#time for transmit limit
@@ -65,6 +65,7 @@ t_sleep_start = 0			#time for sleep origin
 t_release_start = 0			#time for release origin
 t_land_start = 0			#time for land origin
 t_transmit_start = 0
+t_waitPeople_start = 0		#time for waiting after melting
 t_calib_origin = 0			#time for calibration origin
 t_paraDete_start = 0
 t_takePhoto_start = 0		#time for taking photo
@@ -72,6 +73,7 @@ t_goalDete_start = 0
 t_stuckDete_start = 0
 t_afterGoal_start = 0
 timeout_calibration = 180	#time for calibration timeout
+timeout_waitPeople = 20		#time for waiting after melting timeout
 timeout_parachute = 60
 timeout_takePhoto = 30		#time for taking photo timeout
 timeout_sendPhoto = 120		#time for sending photo timeout
@@ -117,7 +119,7 @@ stuckThd = 100
 PstuckCount = 30
 stuckCount = 100	#variable for stuck count
 stuckCountThd = 10	#variable for stuck thd
-LuxThd = 2000		#variable for cover para
+LuxThd = 20			#variable for cover para
 paraExsist = 0 		#variable for Para Detection    0:Not Exsist, 1:Exsist
 paracount = 0		#varable for para stuck
 goalFlug = -1		#variable for GoalDetection		-1:Not Detect, 0:Goal, 1:Detect
@@ -212,7 +214,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	#phaseChk = 8
+	phaseChk = 7
 
 	if phaseChk == 0:
 		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
@@ -523,6 +525,11 @@ if __name__ == "__main__":
 				Melting.Melting(t_melt)
 				time.sleep(1)
 				Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting" + str(i))
+			t_waitPeople_start = time.time()
+			while(time.time() - t_waitPeople_start <= timeout_waitPeople ):
+				IM920.Send("G	"+str(nLat)+"	"+str(nLon))
+				IM920.Send("P5W")
+				time.sleep(1)
 			Other.saveLog(meltingLog, time.time() - t_start, GPS.readGPS(), "Melting Finished")
 			IM920.Send("P5F")
 
@@ -552,7 +559,7 @@ if __name__ == "__main__":
 				time.sleep(1)
 			Motor.motor(-20, -20, 0.9)
 			Motor.motor(0, 0, 0,9)
-			Motor.motor(60, 60, 0.1, 1)
+			Motor.motor(60, 60, 0.25, 1)
 			Motor.motor(0, 0, 2.0)
 			Motor.motor(15, 15, 0.9)
 			Motor.motor(0, 0, 0.9)
@@ -663,7 +670,9 @@ if __name__ == "__main__":
 					nLat = gpsData[1]
 					nLon = gpsData[2]
 
-					#print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+					# --- Save Log --- #
+					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+					Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 					#IM920.Send("G" + str(nLat) + "	" + str(nLon))
 
 				# --- Change Gain --- #
@@ -756,12 +765,12 @@ if __name__ == "__main__":
 					if(paraExsist != 1):	# - Parachute Not Exsist - #
 						IM920.Send("P7PN")
 						print("Parachute is not found")
-						Motor.motor(55, 60, 5)
+						Motor.motor(60, 60, 5)
 					else:			# - Parachute Exsist - #
 						print("Parachute is found")
 						IM920.Send("P7PE")
 						Motor.motor(-15, -15, 1)
-						Motor.motor(-60, -50, 2)
+						Motor.motor(-60, -40, 2)
 						Motor.motor(-60, -60, 3)
 					Motor.motor(0, 0, 1)
 					Other.saveLog(captureLog, time.time() - t_start, GPS.readGPS(), BME280.bme280_read(), photoName)
@@ -795,11 +804,11 @@ if __name__ == "__main__":
 					Motor.motor(mPL, mPR, 0.1, 1)
 
 					# --- Save Log --- #
-					print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
-					Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+					#print(nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
+					#Other.saveLog(runningLog, time.time() - t_start, BMX055.bmx055_read(), nLat, nLon, disGoal, angGoal, nAng, rAng, mPL, mPR, mPS)
 
-			Motor.motor(20, 20)
-			Motor.motor(10, 10)
+			Motor.motor(20, 20, 0.5)
+			Motor.motor(10, 10, 0.5)
 			Motor.motor(0, 0, 1)
 			print("Running Phase Finished")
 			IM920.Send("P7F")
@@ -858,9 +867,8 @@ if __name__ == "__main__":
 						Motor.motor(80, -80, 3, 1)
 						Motor.motor(0, 0, 2)
 						stuckFlug = stuckDetection.BMXstuckDetection(mp_max, stuckThd, stuckCount, stuckCountThd)
-					# --- check GPS --- #
 
-					
+					# --- check GPS --- #
 					t_stuckDete_start = time.time()
 
 				# --- Get information --- #
@@ -945,7 +953,7 @@ if __name__ == "__main__":
 			while(time.time() - t_afterGoal_start < timeout_afterGoal):
 				IM920.Send("P8W")
 				time.sleep(1)
-			
+
 		# ------------------- Sending Photo Phase ------------------- #
 		if(phaseChk <= 9):
 			Other.saveLog(phaseLog, "9", "Sending Photo Phase Started", time.time() - t_start)
@@ -977,6 +985,7 @@ if __name__ == "__main__":
 		Other.saveLog(errorLog, time.time() - t_start, "Error")
 		Other.saveLog(errorLog, traceback.format_exc())
 		Other.saveLog(errorLog, "\n")
+		IM920.Send("G" + str(nLat) + "	" + str(nLon))
 		IM920.Send("EO")
 		#os.system('sudo reboot')
 		close()
