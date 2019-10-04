@@ -73,11 +73,11 @@ t_goalDete_start = 0
 t_stuckDete_start = 0
 t_afterGoal_start = 0
 timeout_calibration = 180	#time for calibration timeout
-timeout_waitPeople = 20		#time for waiting after melting timeout
+timeout_waitPeople = 300		#time for waiting after melting timeout
 timeout_parachute = 60
 timeout_takePhoto = 30		#time for taking photo timeout
 timeout_sendPhoto = 120		#time for sending photo timeout
-timeout_goalDete = 600
+timeout_goalDete = 900
 timeout_stuck = 300
 timeout_afterGoal = 10
 
@@ -119,7 +119,7 @@ stuckThd = 100
 PstuckCount = 30
 stuckCount = 100	#variable for stuck count
 stuckCountThd = 10	#variable for stuck thd
-LuxThd = 20			#variable for cover para
+LuxThd = 2000			#variable for cover para
 paraExsist = 0 		#variable for Para Detection    0:Not Exsist, 1:Exsist
 paracount = 0		#varable for para stuck
 goalFlug = -1		#variable for GoalDetection		-1:Not Detect, 0:Goal, 1:Detect
@@ -151,7 +151,7 @@ nAng = 0.0							#Direction of That time [deg]
 relAng = [0.0, 0.0, 0.0]			#Relative Direction between Goal and Rober That time [deg]
 rAng = 0.0							#Median of relAng [deg]
 mP, mPL, mPR, mPS = 0, 0, 0, 0		#Motor Power
-kpF = 0.3							#Proportional Gain when rover is far from goal
+kpF = 0.2							#Proportional Gain when rover is far from goal
 kpC = 0.6							#Proportional Gain when rover i close to goal
 kp = kpF
 stuckMode = [0, 0]					#Variable for Stuck
@@ -214,7 +214,7 @@ def setup():
 	except:
 		phaseChk = 0
 	#if it is debug
-	phaseChk = 7
+	#phaseChk = 8
 
 	if phaseChk == 0:
 		Other.saveLog(positionLog, "Goal", gLat, gLon, "\t")
@@ -987,5 +987,5 @@ if __name__ == "__main__":
 		Other.saveLog(errorLog, "\n")
 		IM920.Send("G" + str(nLat) + "	" + str(nLon))
 		IM920.Send("EO")
-		#os.system('sudo reboot')
+		os.system('sudo reboot')
 		close()
