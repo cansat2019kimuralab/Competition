@@ -61,7 +61,7 @@ GPS用ライブラリ
 複数のモジュールを組み合わせたプログラム，ライブラリ  
 - [Calibration.py](https://github.com/cansat2019kimuralab/IntegratedProgram/blob/master/Calibration/Calibration.py)  
 地磁気センサ(BMX055)のキャリブレーション用ライブラリ  
-仕様書:[Calibration.py](https://github.com/cansat2019kimuralab/IntegratedProgram/blob/master/Calibration/Calibration.md)
+仕様書:[Calibration.md](https://github.com/cansat2019kimuralab/IntegratedProgram/blob/master/Calibration/Calibration.md)
 - [pidControl.py](https://github.com/cansat2019kimuralab/IntegratedProgram/blob/master/Control/pidControl.py)  
 回転速度をPID制御で調整するライブラリ，キャリブレーションで使用  
 仕様書:なし
