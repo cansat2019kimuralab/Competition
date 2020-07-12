@@ -49,7 +49,7 @@ GPS用ライブラリ
 仕様書:[GoalDetection.md](https://github.com/cansat2019kimuralab/Detection/blob/master/GoalDetection/GoalDetection.md)
 - [ParaDetection.py](https://github.com/cansat2019kimuralab/Detection/blob/master/ParachuteDetection/ParaDetection.py)  
 パラシュート検出用プログラム  
-仕様書:[ParaDetection.md](https://github.com/cansat2019kimuralab/Detection/blob/master/ParachuteDetection/ParaDetection.py)
+仕様書:[ParaDetection.md](https://github.com/cansat2019kimuralab/Detection/blob/master/ParachuteDetection/ParaDetection.md)
 - [Release.py](https://github.com/cansat2019kimuralab/Detection/blob/master/ReleaseAndLandingDetection/Release.py)  
 放出判定用ライブラリ  
 仕様書:[ReleaseAndLanding.md](https://github.com/cansat2019kimuralab/Detection/blob/master/ReleaseAndLandingDetection/ReleaseAndLanding.md)
