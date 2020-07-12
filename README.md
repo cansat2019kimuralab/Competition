@@ -41,13 +41,48 @@ GPS用ライブラリ
 照度センサTSL2561用ライブラリ  
 仕様書:[TSL2561.md](https://github.com/cansat2019kimuralab/SensorModuleTest/blob/master/TSL2561/TSL2561.md)
 
-### Detection
+### [Detection](https://github.com/cansat2019kimuralab/Detection)
+判定系プログラム用ライブラリ  
+放出，着地，パラシュート，ゴール判定に使用  
+- [goal_detection.py](https://github.com/cansat2019kimuralab/Detection/blob/master/GoalDetection/goal_detection.py) 
+ゴール検出用ライブラリ  
+仕様書:[GoalDetection.md](https://github.com/cansat2019kimuralab/Detection/blob/master/GoalDetection/GoalDetection.md)
+- [ParaDetection.py](https://github.com/cansat2019kimuralab/Detection/blob/master/ParachuteDetection/ParaDetection.py)  
+パラシュート検出用プログラム  
+仕様書:[ParaDetection.md](https://github.com/cansat2019kimuralab/Detection/blob/master/ParachuteDetection/ParaDetection.py)
+- [Release.py](https://github.com/cansat2019kimuralab/Detection/blob/master/ReleaseAndLandingDetection/Release.py)  
+放出判定用ライブラリ  
+仕様書:[ReleaseAndLanding.md](https://github.com/cansat2019kimuralab/Detection/blob/master/ReleaseAndLandingDetection/ReleaseAndLanding.md)
+- [Land.py](https://github.com/cansat2019kimuralab/Detection/blob/master/ReleaseAndLandingDetection/Land.py)  
+着地判定用ライブラリ  
+仕様書:[ReleaseAndLanding.md](https://github.com/cansat2019kimuralab/Detection/blob/master/ReleaseAndLandingDetection/ReleaseAndLanding.md)
 
 ### IntegratedProgram
+- [Calibration.py](https://github.com/cansat2019kimuralab/IntegratedProgram/blob/master/Calibration/Calibration.py)  
+地磁気センサ(BMX055)のキャリブレーション用ライブラリ  
+仕様書:[Calibration.py](https://github.com/cansat2019kimuralab/IntegratedProgram/blob/master/Calibration/Calibration.md)
+- [pidControl.py](https://github.com/cansat2019kimuralab/IntegratedProgram/blob/master/Control/pidControl.py)  
+回転速度をPID制御で調整するライブラリ，キャリブレーションで使用  
+仕様書:なし
+- [RunningGPS.py](https://github.com/cansat2019kimuralab/IntegratedProgram/blob/master/Running/RunningGPS.py)
+GPSを用いてゴールまで走行するプログラムで使用するライブラリ  
+仕様書:[Running.md](https://github.com/cansat2019kimuralab/IntegratedProgram/blob/master/Running/Running.md)
+- [Stuck.py](https://github.com/cansat2019kimuralab/IntegratedProgram/blob/master/Stuck/Stuck.py)  
+スタック回避関係のライブラリ  
+仕様書:なし
+- [stuckDetection.py](https://github.com/cansat2019kimuralab/IntegratedProgram/blob/master/Stuck/stuckDetection.py)  
+スタック検出関係のライブラリ  
+仕様書:なし
 
-
+### Mission
+- [sendPhoto.py](https://github.com/cansat2019kimuralab/Mission/blob/master/sendPhoto.py)  
+画像伝送用ライブラリ  
+仕様書:なし
 
 ### Other
+- [Other.py]()
+その他の便利プログラムの詰め合わせ
+仕様書:[Other.md](https://github.com/cansat2019kimuralab/Other/blob/master/Other.md)
 
 ## ブランチ一覧
 - NoshiroFirst : 能代打ち上げ第1回
