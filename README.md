@@ -57,7 +57,8 @@ GPS用ライブラリ
 着地判定用ライブラリ  
 仕様書:[ReleaseAndLanding.md](https://github.com/cansat2019kimuralab/Detection/blob/master/ReleaseAndLandingDetection/ReleaseAndLanding.md)
 
-### IntegratedProgram
+### [IntegratedProgram](https://github.com/cansat2019kimuralab/IntegratedProgram)
+複数のモジュールを組み合わせたプログラム，ライブラリ  
 - [Calibration.py](https://github.com/cansat2019kimuralab/IntegratedProgram/blob/master/Calibration/Calibration.py)  
 地磁気センサ(BMX055)のキャリブレーション用ライブラリ  
 仕様書:[Calibration.py](https://github.com/cansat2019kimuralab/IntegratedProgram/blob/master/Calibration/Calibration.md)
