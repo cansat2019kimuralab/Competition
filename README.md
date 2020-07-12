@@ -75,12 +75,12 @@ GPSを用いてゴールまで走行するプログラムで使用するライ�
 スタック検出関係のライブラリ  
 仕様書:なし
 
-### Mission
+### [Mission](https://github.com/cansat2019kimuralab/Mission)
 - [sendPhoto.py](https://github.com/cansat2019kimuralab/Mission/blob/master/sendPhoto.py)  
 画像伝送用ライブラリ  
 仕様書:なし
 
-### Other
+### [Other](https://github.com/cansat2019kimuralab/Other)
 - [Other.py]()
 その他の便利プログラムの詰め合わせ
 仕様書:[Other.md](https://github.com/cansat2019kimuralab/Other/blob/master/Other.md)
