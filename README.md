@@ -1,4 +1,5 @@
 # Competition
+本番で使用したプログラムを保管  
 
 ## Nosiro
 - branch : NoshiroFirst  
